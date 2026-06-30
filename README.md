@@ -1,152 +1,135 @@
 # ⚡ VOLT
 
-**Plataforma de treinos físicos** — API REST com FastAPI, SPA em vanilla JS e dataset de 1.324 exercícios com GIFs animados.
+**Fitness training platform** — REST API built with FastAPI, vanilla JS SPA, and a dataset of 1,324 exercises with animated GIFs.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-009688?style=flat&logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-embedded-003B57?style=flat&logo=sqlite&logoColor=white)
-![License](https://img.shields.io/badge/Licença-Educacional-orange?style=flat)
+![License](https://img.shields.io/badge/License-Educational-orange?style=flat)
 
 ---
 
-## Índice
+## Table of Contents
 
-- [Visão Geral](#visão-geral)
-- [Funcionalidades](#funcionalidades)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação e Execução](#instalação-e-execução)
-- [Assets de Mídia](#assets-de-mídia)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
+- [Overview](#overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
 - [Docker](#docker)
-- [Enriquecimento LLM](#enriquecimento-llm-opcional)
-- [Endpoints da API](#endpoints-da-api)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Tecnologias](#tecnologias)
-- [Licença](#licença)
+- [LLM Enrichment](#llm-enrichment-optional)
+- [API Endpoints](#api-endpoints)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [License](#license)
 
 ---
 
-## Visão Geral
+## Overview
 
-VOLT é uma aplicação full-stack para gerenciamento de treinos. O backend expõe uma API REST com autenticação JWT, planos de treino semanais e sugestões de progressão por double progression. O frontend é uma SPA em vanilla JS com cronômetro de treino, dashboard semanal e gráficos de evolução de carga — sem nenhum framework JS.
+VOLT is a full-stack workout management app. The backend exposes a REST API with JWT authentication, weekly training plans, and double-progression suggestions. The frontend is a vanilla JS SPA with a workout timer, weekly dashboard, and load progression charts — no JS framework required.
 
 | | |
 |---|---|
 | **Backend** | FastAPI + SQLite |
 | **Frontend** | Vanilla JS (SPA) |
-| **Exercícios** | 1.324 com GIFs animados |
-| **Idiomas** | PT · EN · ES · IT · TR |
-| **Autenticação** | JWT (HS256, 7 dias) |
+| **Exercises** | 1,324 with animated GIFs |
+| **Languages** | PT · EN · ES · IT · TR |
+| **Auth** | JWT (HS256, 7 days) |
 
 ---
 
-## Funcionalidades
+## Features
 
-### 🏋️ Exercícios
-- Busca por nome, parte do corpo, equipamento e músculo alvo
-- GIF animado + instruções traduzidas para português
-- Insights gerados por LLM: dificuldade, MET, erros comuns, risco de lesão e variações
-- Exercícios alternativos pelo mesmo grupo muscular
+### 🏋️ Exercises
+- Search by name, body part, equipment, and target muscle
+- Animated GIF + instructions translated to Portuguese
+- LLM-generated insights: difficulty, MET, common mistakes, injury risk, and variations
+- Alternative exercises for the same muscle group
 
-### 📅 Plano de Treino
-- Plano semanal personalizado (Seg → Dom)
-- Sets, reps e tempo de descanso configuráveis por exercício
-- Sugestões de progressão automática por **double progression**:
-  `reps ↑` → `série +` → `variação →` → `carga ↑`
+### 📅 Training Plan
+- Personalized weekly plan (Mon → Sun)
+- Configurable sets, reps, and rest time per exercise
+- Automatic progression suggestions via **double progression**:
+  `reps ↑` → `sets +` → `harder variation →` → `weight ↑`
 
-### ⏱️ Treino (Cronômetro)
-- Cronômetro ativo com timer de descanso entre séries
-- Log automático de carga salvo no localStorage
-- Tela de conclusão com métricas de sessão
+### ⏱️ Workout Timer
+- Active stopwatch with rest timer between sets
+- Automatic load log saved to localStorage
+- Completion screen with session metrics
 
-### 📊 Dashboard Semanal
-- Contadores de treinos, séries, tempo e calorias
-- Heatmap de frequência semanal + streak de dias consecutivos 🔥
-- Chips dos grupos musculares mais trabalhados na semana
-- Gráfico sparkline de evolução de carga por exercício
-- Histórico das últimas sessões com kcal estimadas
+### 📊 Weekly Dashboard
+- Counters for workouts, sets, time, and calories
+- Weekly frequency heatmap + consecutive-day streak 🔥
+- Chips for the most-trained muscle groups of the week
+- Sparkline chart showing load progression per exercise
+- Recent session history with estimated kcal
 
-### 🔥 Cálculo de Calorias
+### 🔥 Calorie Calculation
 
 ```
-aeróbico = MET × peso_kg × 3,5 / 200 × minutos_efetivos
-força    = volume_kg / 60
-total    = aeróbico + força
+aerobic  = MET × weight_kg × 3.5 / 200 × effective_minutes
+strength = volume_kg / 60
+total    = aerobic + strength
 ```
 
-> `minutos_efetivos = max(duração_real, séries × 1 min)` — garante estimativas realistas mesmo em sessões rápidas.
+> `effective_minutes = max(real_duration, sets × 1 min)` — ensures realistic estimates even for short sessions.
 
 ### 📱 Mobile
-- Bottom navigation bar fixa (Início · Plano · Treino · Perfil)
-- Layout responsivo para telas pequenas
+- Fixed bottom navigation bar (Home · Plan · Workout · Profile)
+- Responsive layout for small screens
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
 - [Python 3.11+](https://www.python.org/downloads/)
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) — gerenciador de pacotes Python
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 
 ---
 
-## Instalação e Execução
+## Installation
 
 ```bash
-# 1. Clonar o repositório
+# 1. Clone the repository
 git clone https://github.com/reissbruno/volt-exercise.git
 cd volt-exercise
 
-# 2. Instalar dependências
+# 2. Install dependencies
 uv sync
 
-# 3. Configurar variáveis de ambiente
+# 3. Configure environment variables
 cp .env.example .env
-# Edite .env e defina JWT_SECRET com um valor seguro (mín. 32 chars)
+# Edit .env and set JWT_SECRET to a secure random value (min. 32 chars)
 
-# 4. Iniciar o servidor
+# 4. Start the server
 uv run uvicorn server:app --reload
 ```
 
-| URL | Descrição |
+| URL | Description |
 |---|---|
-| `http://localhost:8000/app` | Aplicação |
+| `http://localhost:8000/app` | Application |
 | `http://localhost:8000/docs` | Swagger UI |
 | `http://localhost:8000/redoc` | ReDoc |
 
-> O banco SQLite é criado automaticamente em `data/exercises.db` na primeira execução.
+> The SQLite database is created automatically at `data/exercises.db` on first run.
 
 ---
 
-## Assets de Mídia
+## Environment Variables
 
-Os ~140 MB de assets (`public/images/` e `public/videos/`) **não estão incluídos no repositório** para manter o clone leve.
+Create a `.env` file in the project root (use `.env.example` as a template):
 
-**Para rodar com mídia completa**, baixe os assets separadamente e coloque-os em:
-
-```
-public/
-├── images/   # 1.324 thumbnails JPG (~12 MB)
-└── videos/   # 1.324 GIFs animados (~127 MB)
-```
-
-> Sem os assets, a aplicação funciona normalmente — os exercícios são listados sem imagem/GIF.
-
----
-
-## Variáveis de Ambiente
-
-Crie um arquivo `.env` na raiz (use `.env.example` como base):
-
-| Variável | Padrão | Descrição |
+| Variable | Default | Description |
 |---|---|---|
-| `PORT` | `8000` | Porta do servidor |
-| `DB_PATH` | `data/exercises.db` | Caminho do banco SQLite |
-| `JWT_SECRET` | _(obrigatório)_ | Segredo JWT — use um valor aleatório longo |
-| `ALLOWED_ORIGINS` | `*` | Origens CORS permitidas |
-| `EXERCISES_JSON_PATH` | `data/exercises.json` | Caminho do dataset |
-| `OPENAI_API_KEY` | — | Apenas para enriquecimento LLM (opcional) |
+| `PORT` | `8000` | Server port |
+| `DB_PATH` | `data/exercises.db` | SQLite database path |
+| `JWT_SECRET` | _(required)_ | JWT secret — use a long random value |
+| `ALLOWED_ORIGINS` | `*` | Allowed CORS origins |
+| `EXERCISES_JSON_PATH` | `data/exercises.json` | Dataset path |
+| `OPENAI_API_KEY` | — | Only for LLM enrichment (optional) |
 
-> **Nunca commite o arquivo `.env`** — ele já está no `.gitignore`.
+> **Never commit the `.env` file** — it is already in `.gitignore`.
 
 ---
 
@@ -156,99 +139,99 @@ Crie um arquivo `.env` na raiz (use `.env.example` como base):
 # Build
 docker build -t volt-exercise .
 
-# Run — monta assets e banco como volumes externos
+# Run — mount assets and database as external volumes
 docker run -p 8000:8000 \
-  -e JWT_SECRET=seu-segredo-aqui \
+  -e JWT_SECRET=your-secret-here \
   -v $(pwd)/public:/app/public \
   -v $(pwd)/data:/app/data \
   volt-exercise
 ```
 
-A imagem não inclui os assets de mídia por padrão (~140 MB). Para embutir tudo na imagem, descomente `COPY public/` no `Dockerfile`.
+The image includes the exercise dataset but **not the media assets** — they live in the repo but are excluded from the Docker build via `.dockerignore` to keep the image lean. Mount them as a volume at runtime as shown above.
 
 ---
 
-## Enriquecimento LLM (Opcional)
+## LLM Enrichment (Optional)
 
-O script `scripts/enrich_exercises.py` popula a tabela `exercise_insights` via OpenAI, habilitando os endpoints `/insights`, `/alternatives` e `/progression` com dados completos.
+The `scripts/enrich_exercises.py` script populates the `exercise_insights` table via OpenAI, enabling the `/insights`, `/alternatives`, and `/progression` endpoints with full data.
 
 ```bash
-# Adicione OPENAI_API_KEY no .env, depois:
+# Add OPENAI_API_KEY to .env, then:
 uv run python scripts/enrich_exercises.py
 ```
 
 | | |
 |---|---|
-| **Modelo** | GPT-4o mini |
-| **Custo estimado** | < US$ 0,20 para todos os 1.324 exercícios |
-| **Checkpoint** | `scripts/enrich_checkpoint.json` — retoma de onde parou |
-| **Sem enrichment** | MET padrão 3,5; `/insights` retorna 404 |
+| **Model** | GPT-4o mini |
+| **Estimated cost** | < US$ 0.20 for all 1,324 exercises |
+| **Checkpoint** | `scripts/enrich_checkpoint.json` — resumes where it left off |
+| **Without enrichment** | Default MET 3.5; `/insights` returns 404 |
 
 ---
 
-## Endpoints da API
+## API Endpoints
 
-### Autenticação
+### Authentication
 
-| Método | Rota | Descrição |
+| Method | Route | Description |
 |---|---|---|
-| `POST` | `/auth/register` | Cadastro |
-| `POST` | `/auth/login` | Login — retorna JWT |
-| `GET` | `/me` | Perfil autenticado |
-| `PUT` | `/me` | Atualiza perfil |
+| `POST` | `/auth/register` | Sign up |
+| `POST` | `/auth/login` | Log in — returns JWT |
+| `GET` | `/me` | Authenticated profile |
+| `PUT` | `/me` | Update profile |
 
-### Exercícios
+### Exercises
 
-| Método | Rota | Descrição |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/exercises` | Lista com filtros e paginação |
-| `GET` | `/exercises/{id}` | Exercício por ID |
-| `GET` | `/exercises/{id}/insights` | Insights LLM |
-| `GET` | `/exercises/{id}/alternatives` | Exercícios alternativos |
-| `GET` | `/exercises/random` | Exercício aleatório |
-| `GET` | `/exercises/suggestions` | Sugestões por foco muscular |
+| `GET` | `/exercises` | List with filters and pagination |
+| `GET` | `/exercises/{id}` | Exercise by ID |
+| `GET` | `/exercises/{id}/insights` | LLM insights |
+| `GET` | `/exercises/{id}/alternatives` | Alternative exercises |
+| `GET` | `/exercises/random` | Random exercise |
+| `GET` | `/exercises/suggestions` | Suggestions by muscle focus |
 
-### Planos de Treino
+### Training Plans
 
-| Método | Rota | Descrição |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/plans` | Lista planos do usuário |
-| `POST` | `/plans` | Cria novo plano |
-| `GET` | `/plans/{id}` | Detalhes do plano |
-| `PUT` | `/plans/{id}` | Atualiza plano |
-| `DELETE` | `/plans/{id}` | Remove plano |
-| `GET` | `/plans/{id}/progression` | Sugestões de progressão |
-| `POST` | `/plans/{id}/schedule` | Adiciona exercício a um dia |
-| `PUT` | `/plans/{id}/schedule/{entry_id}` | Atualiza entrada |
-| `DELETE` | `/plans/{id}/schedule/{entry_id}` | Remove entrada |
+| `GET` | `/plans` | List user's plans |
+| `POST` | `/plans` | Create a new plan |
+| `GET` | `/plans/{id}` | Plan details |
+| `PUT` | `/plans/{id}` | Update plan |
+| `DELETE` | `/plans/{id}` | Delete plan |
+| `GET` | `/plans/{id}/progression` | Progression suggestions |
+| `POST` | `/plans/{id}/schedule` | Add exercise to a day |
+| `PUT` | `/plans/{id}/schedule/{entry_id}` | Update entry |
+| `DELETE` | `/plans/{id}/schedule/{entry_id}` | Remove entry |
 
-### Utilitários
+### Utilities
 
-| Método | Rota | Descrição |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/body-parts` | Partes do corpo disponíveis |
-| `GET` | `/equipment` | Equipamentos disponíveis |
-| `GET` | `/categories` | Categorias disponíveis |
-| `POST` | `/translate` | Traduz texto en → pt |
-| `GET` | `/translate/status` | Status do motor de tradução |
+| `GET` | `/body-parts` | Available body parts |
+| `GET` | `/equipment` | Available equipment |
+| `GET` | `/categories` | Available categories |
+| `POST` | `/translate` | Translate text en → pt |
+| `GET` | `/translate/status` | Translation engine status |
 
 ---
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 volt-exercise/
 ├── data/
-│   └── exercises.json          # Dataset — 1.324 exercícios (6,3 MB)
-├── public/                     # Assets de mídia — não versionados (~140 MB)
-│   ├── images/                 # Thumbnails JPG
-│   └── videos/                 # GIFs animados
+│   └── exercises.json          # Dataset — 1,324 exercises (6.3 MB)
+├── public/                     # Media assets — 1,324 GIFs + thumbnails (~140 MB)
+│   ├── images/                 # JPG thumbnails
+│   └── videos/                 # Animated GIFs
 ├── frontend/
-│   └── app.html                # SPA completa (~2.259 linhas)
+│   └── app.html                # Full SPA (~2,259 lines)
 ├── scripts/
-│   └── enrich_exercises.py     # Enriquecimento LLM em lote
-├── server.py                   # API FastAPI (~1.094 linhas)
-├── pyproject.toml              # Dependências Python (uv)
+│   └── enrich_exercises.py     # Batch LLM enrichment
+├── server.py                   # FastAPI API (~1,094 lines)
+├── pyproject.toml              # Python dependencies (uv)
 ├── Dockerfile
 ├── .dockerignore
 └── .env.example
@@ -256,35 +239,35 @@ volt-exercise/
 
 ---
 
-## Tecnologias
+## Tech Stack
 
 **Backend**
-| Lib | Uso |
+| Library | Purpose |
 |---|---|
-| [FastAPI](https://fastapi.tiangolo.com/) | Framework REST assíncrono |
-| [Uvicorn](https://www.uvicorn.org/) | Servidor ASGI |
-| [SQLite](https://www.sqlite.org/) | Banco de dados embutido |
-| [python-jose](https://github.com/mpdavis/python-jose) | Autenticação JWT |
-| [bcrypt](https://github.com/pyca/bcrypt/) | Hash de senhas |
-| [Argos Translate](https://github.com/argosopentech/argos-translate) | Tradução offline en → pt |
-| [OpenAI SDK](https://github.com/openai/openai-python) | Enriquecimento LLM (opcional) |
+| [FastAPI](https://fastapi.tiangolo.com/) | Async REST framework |
+| [Uvicorn](https://www.uvicorn.org/) | ASGI server |
+| [SQLite](https://www.sqlite.org/) | Embedded database |
+| [python-jose](https://github.com/mpdavis/python-jose) | JWT authentication |
+| [bcrypt](https://github.com/pyca/bcrypt/) | Password hashing |
+| [Argos Translate](https://github.com/argosopentech/argos-translate) | Offline translation en → pt |
+| [OpenAI SDK](https://github.com/openai/openai-python) | LLM enrichment (optional) |
 
 **Frontend**
-- HTML5 + CSS3 + JavaScript puro — sem frameworks ou bundlers
+- HTML5 + CSS3 + plain JavaScript — no frameworks or bundlers
 - [Google Fonts](https://fonts.google.com/) — Anton + Manrope
-- LocalStorage para sessões, carga e preferências do usuário
+- LocalStorage for sessions, load logs, and user preferences
 
 ---
 
-## Licença
+## License
 
-Uso **educacional e não-comercial**. Os assets de mídia pertencem aos seus criadores originais.
+For **educational and non-commercial use only**. Media assets belong to their original creators.
 
 | | |
 |---|---|
-| Repositório | [github.com/reissbruno/volt-exercise](https://github.com/reissbruno/volt-exercise) |
-| Dataset base | [github.com/hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) |
-| Traduções | ES · IT · TR (comunidade) · PT (Argos Translate) |
-| Mídia original | Kaggle — "Fitness Exercises Dataset" por omarxadel |
+| Repository | [github.com/reissbruno/volt-exercise](https://github.com/reissbruno/volt-exercise) |
+| Base dataset | [github.com/hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) |
+| Translations | ES · IT · TR (community) · PT (Argos Translate) |
+| Original media | Kaggle — "Fitness Exercises Dataset" by omarxadel |
 
-> Para uso comercial, consulte a fonte original no [Kaggle](https://www.kaggle.com/).
+> For commercial use, refer to the original source on [Kaggle](https://www.kaggle.com/).
