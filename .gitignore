@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+
+# Ambiente
+.env
+
+
+# Banco de dados
+data/exercises.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# LLM enrichment checkpoint
+scripts/enrich_checkpoint.json
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+OVERVIEW.md
+
+
+# Misc
+*.zip
+*.tar.gz

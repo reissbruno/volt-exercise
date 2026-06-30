@@ -1,0 +1,2259 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOLT</title>
+  <link rel="icon" type="image/png" href="logo-volt.png" sizes="94x94">
+  <link rel="apple-touch-icon" href="logo-volt.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #F0531C;
+      --accent-strong: #F5622E;
+      --accent-deep: #D94518;
+      --accent-soft: rgba(240,83,28,.14);
+    }
+    body { background: #080809; color: #F3F3F4; font-family: Manrope, system-ui, sans-serif; font-size: 14px; }
+
+    .hidden { display: none !important; }
+
+    /* ── Overlay & Modals ── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(4,4,6,.66); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal {
+      display: flex; flex-direction: column;
+      width: min(94vw, 480px); max-height: 82vh;
+      background: #141416; border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px; overflow: hidden;
+      box-shadow: 0 40px 100px -30px rgba(0,0,0,.9);
+    }
+    .modal-sm { width: min(94vw, 420px); max-height: none; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1a1a1c; border: 1px solid rgba(255,255,255,.12); border-radius: 10px;
+      padding: 10px 18px; font-size: 13px; font-weight: 500; z-index: 999; white-space: nowrap;
+      animation: tin .2s ease;
+    }
+    .toast.hidden { display: none; }
+    .toast.ok  { border-color: #22c55e; color: #22c55e; }
+    .toast.err { border-color: #ef4444; color: #ef4444; }
+    @keyframes tin { from { opacity:0; transform:translateX(-50%) translateY(8px); } to { opacity:1; transform:translateX(-50%); } }
+
+    /* ── Settings ── */
+    .settings-page { max-width: 560px; margin: 0 auto; }
+    .settings-section { margin-bottom: 22px; }
+    .settings-section-title { font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: #8E8E94; margin-bottom: 8px; padding-left: 2px; }
+    .settings-card { background: #131315; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,.06); gap: 14px; }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-label { font-size: 13px; font-weight: 500; }
+    .settings-row-sub { font-size: 12px; color: #8E8E94; margin-top: 2px; }
+    .settings-input { background: transparent; border: none; color: #F3F3F4; font-size: 13px; font-family: Manrope, sans-serif; text-align: right; outline: none; flex: 1; min-width: 0; }
+    .lang-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 13px 16px; }
+    .lang-chip { padding: 7px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; background: transparent; color: #8E8E94; font-family: Manrope, sans-serif; }
+    .lang-chip:hover { border-color: var(--accent); color: #F3F3F4; }
+    .lang-chip.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+
+    /* ── Pagination ── */
+    .pag { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 32px; flex-wrap: wrap; }
+    .pag-btn { height: 36px; padding: 0 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; background: transparent; color: #9A9AA0; font: 600 13px Manrope; cursor: pointer; transition: all .15s; }
+    .pag-btn:hover:not(:disabled) { border-color: rgba(255,255,255,.2); color: #fff; background: rgba(255,255,255,.05); }
+    .pag-btn:disabled { opacity: .35; cursor: default; }
+    .pag-info { color: #8E8E94; font-size: 13px; font-weight: 500; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+
+    /* ── Spinner ── */
+    .spinner { width: 24px; height: 24px; border: 2px solid rgba(255,255,255,.1); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; margin: 60px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Auth — VOLT exact design ── */
+    @keyframes voltPop { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:none; } }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+    input[type=number] { -moz-appearance:textfield; }
+    @keyframes voltGlow {
+      0%,100% { opacity:.13; transform:translateX(-50%) scale(1); }
+      50%      { opacity:.18; transform:translateX(-50%) scale(1.12); }
+    }
+    .volt-auth-page {
+      position: fixed; inset: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      padding: clamp(16px,4vw,40px); overflow-y: auto; overflow-x: hidden;
+      font-family: Manrope, system-ui, sans-serif;
+      background:
+        radial-gradient(125% 80% at 50% -12%, color-mix(in srgb,var(--accent) 18%,transparent), transparent 58%),
+        radial-gradient(60% 40% at 80% 110%, color-mix(in srgb,var(--accent) 8%,transparent), transparent 55%),
+        #08080A;
+    }
+    .volt-glow {
+      position: absolute; top: -20%; left: 50%; transform: translateX(-50%); opacity: .13;
+      width: clamp(380px,55vw,680px); aspect-ratio: 1;
+      background: radial-gradient(circle, color-mix(in srgb,var(--accent) 75%,transparent) 0%, transparent 68%);
+      filter: blur(48px); pointer-events: none; border-radius: 50%;
+      animation: voltGlow 9s ease-in-out infinite;
+    }
+    .volt-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 90% 80% at 50% 50%, transparent 40%, rgba(8,8,10,.6) 100%); }
+    .volt-card {
+      position: relative; z-index: 1; width: min(100%,432px);
+      background: linear-gradient(180deg,rgba(23,23,26,.92),rgba(15,15,17,.94));
+      border: 1px solid rgba(255,255,255,.07); border-radius: 26px;
+      padding: clamp(28px,5vw,42px);
+      box-shadow: 0 40px 90px -34px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.05);
+      backdrop-filter: blur(14px);
+    }
+    .volt-back { display: flex; align-items: center; gap: 5px; background: none; border: none; color: #8A8A90; font: 600 13px Manrope; cursor: pointer; margin-bottom: 20px; padding: 0; transition: color .15s; }
+    .volt-back:hover { color: #F7F7F6; }
+    .volt-logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .volt-logo-icon { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 12px; background: var(--accent-soft); border: 1px solid color-mix(in srgb,var(--accent) 35%,transparent); }
+    .volt-brand { font-family: Anton, sans-serif; font-size: 26px; letter-spacing: .05em; color: #F7F7F6; line-height: 1; }
+    .volt-tagline { color: #9A9AA0; font-size: 15.5px; line-height: 1.6; font-weight: 500; margin-bottom: 26px; }
+    .volt-stats { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
+    .volt-stats-hi { font-weight: 800; color: #F7F7F6; font-size: 15px; }
+    .volt-stats-lo { color: #7A7A80; font-size: 14px; }
+    .volt-stats-dot { width: 4px; height: 4px; border-radius: 50%; background: #3A3A42; flex-shrink: 0; }
+    .volt-btn-col { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+    .volt-btn-primary { width: 100%; height: 52px; border: none; border-radius: 14px; background: linear-gradient(180deg,var(--accent-strong),var(--accent-deep)); color: #fff; font: 700 16px Manrope; cursor: pointer; box-shadow: 0 14px 36px -12px color-mix(in srgb,var(--accent) 65%,transparent); transition: filter .15s; }
+    .volt-btn-primary:hover { filter: brightness(1.06); }
+    .volt-btn-secondary { width: 100%; height: 52px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: rgba(255,255,255,.03); color: #E4E4E8; font: 700 16px Manrope; cursor: pointer; transition: background .15s, border-color .15s; }
+    .volt-btn-secondary:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.24); }
+    .volt-lock-row { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 24px; color: #5C5C62; font-size: 12.5px; }
+    .volt-form-head { text-align: center; margin-bottom: 24px; }
+    .volt-form-head h1 { margin: 0; font: 800 24px Manrope; letter-spacing: -.01em; color: #F7F7F6; }
+    .volt-form-head p { margin: 6px 0 0; color: #9A9AA0; font-size: 14px; }
+    .volt-form { display: flex; flex-direction: column; gap: 16px; }
+    .volt-field { display: flex; flex-direction: column; }
+    .volt-label { display: block; font: 600 11px Manrope; letter-spacing: .09em; text-transform: uppercase; color: #8A8A90; margin-bottom: 9px; }
+    .volt-input { width: 100%; height: 52px; padding: 0 16px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); color: #F5F5F4; font: 500 15px Manrope; outline: none; transition: border-color .18s, box-shadow .18s; }
+    .volt-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .volt-pw-wrap { position: relative; }
+    .volt-input-pw { padding: 0 48px 0 16px; }
+    .volt-pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #7A7A80; cursor: pointer; border-radius: 9px; transition: color .15s; }
+    .volt-pw-toggle:hover { color: #C9C9CE; }
+    .volt-forgot { display: block; text-align: right; margin-top: 10px; color: #9A9AA0; font-size: 13px; text-decoration: none; transition: color .15s; }
+    .volt-forgot:hover { color: var(--accent); }
+    .volt-form-err { color: #FF6B4A; font-size: 13px; min-height: 18px; text-align: center; }
+    .volt-switch { text-align: center; margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.07); color: #8A8A90; font-size: 13.5px; }
+    .volt-switch-btn { background: none; border: none; color: var(--accent); font: 700 13.5px Manrope; cursor: pointer; padding: 0; }
+    .volt-tos { text-align: center; margin: 16px 0 0; color: #5C5C62; font-size: 11.5px; line-height: 1.5; }
+  #bottom-nav { display: flex !important; }
+  #main { padding-bottom: 80px; }
+  @media (max-width: 640px) {
+    #hdr-nav { display: none !important; }
+    #hdr-logout { display: none !important; }
+    #user-name-hdr { display: none !important; }
+    header { flex-wrap: nowrap !important; }
+  }
+  </style>
+</head>
+<body>
+
+<!-- ── App shell ── -->
+<div id="app" class="hidden" style="min-height:100dvh;width:100%;font-family:Manrope,system-ui,sans-serif;background:radial-gradient(120% 60% at 50% -5%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 55%),#080809;color:#F3F3F4;">
+
+  <header style="position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px clamp(16px,3vw,32px);background:rgba(10,10,12,.78);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);">
+    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="go('exercises')">
+      <img src="logo-volt.png" alt="VOLT" style="height:36px;width:auto;object-fit:contain;"><span style="font-family:Anton,sans-serif;font-size:22px;letter-spacing:.05em;color:#F7F7F6;line-height:1;">VOLT</span>
+    </div>
+    <nav id="hdr-nav" style="display:flex;align-items:center;gap:4px;padding:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;">
+      <button id="tab-ex" onclick="go('exercises')" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 18px;border:none;border-radius:10px;cursor:pointer;font:700 14px Manrope;white-space:nowrap;transition:background .15s,color .15s;">Exercícios</button>
+      <button id="tab-pl" onclick="go('plans')" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 18px;border:none;border-radius:10px;cursor:pointer;font:700 14px Manrope;white-space:nowrap;transition:background .15s,color .15s;">Meus Planos<span id="plan-badge" class="hidden" style="min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:800;"></span></button>
+      <button id="tab-wk" onclick="go('workout')" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 18px;border:none;border-radius:10px;cursor:pointer;font:700 14px Manrope;white-space:nowrap;transition:background .15s,color .15s;">Treino</button>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="user-info" style="display:flex;align-items:center;gap:9px;cursor:pointer;" onclick="go('settings')" title="Configurações">
+        <span id="user-avatar" style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent-strong),var(--accent-deep));color:#fff;font-weight:800;font-size:14px;flex-shrink:0;"></span>
+        <span id="user-name-hdr" style="font-size:14px;font-weight:600;color:#D8D8DC;"></span>
+      </div>
+      <button id="hdr-logout" onclick="logout()" style="height:38px;padding:0 16px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:#C4C4C8;font:600 13.5px Manrope;cursor:pointer;transition:background .15s,color .15s;" onmouseover="this.style.background='rgba(255,255,255,.05)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#C4C4C8'">Sair</button>
+    </div>
+  </header>
+
+  <!-- Bottom nav (mobile only) -->
+  <nav id="bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,12,.96);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.08);padding:10px 0 env(safe-area-inset-bottom,10px);">
+    <div style="display:flex;width:100%;justify-content:space-evenly;align-items:center;">
+      <button id="bnav-ex" onclick="go('exercises')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0;background:none;border:none;cursor:pointer;color:#7C7C82;transition:color .15s;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span id="bnav-ex-dot" style="width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0;transition:opacity .15s;"></span>
+      </button>
+      <button id="bnav-pl" onclick="go('plans')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0;background:none;border:none;cursor:pointer;color:#7C7C82;transition:color .15s;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span id="bnav-pl-dot" style="width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0;transition:opacity .15s;"></span>
+      </button>
+      <button id="bnav-wk" onclick="go('workout')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0;background:none;border:none;cursor:pointer;color:#7C7C82;transition:color .15s;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg>
+        <span id="bnav-wk-dot" style="width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0;transition:opacity .15s;"></span>
+      </button>
+      <button id="bnav-st" onclick="go('settings')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0;background:none;border:none;cursor:pointer;color:#7C7C82;transition:color .15s;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span id="bnav-st-dot" style="width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0;transition:opacity .15s;"></span>
+      </button>
+    </div>
+  </nav>
+
+  <main id="main" style="max-width:1340px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(16px,3vw,32px) 64px;"></main>
+</div>
+
+<!-- ── Auth page ── -->
+<div id="auth-root"></div>
+
+<!-- ── Modals ── -->
+<div class="overlay hidden" id="overlay" onclick="onOvClick(event)">
+  <div class="modal hidden" id="m-assign" onclick="event.stopPropagation()" style="width:min(96vw,980px);max-height:92dvh;flex-direction:row;flex-wrap:wrap;border-radius:26px;overflow:hidden;align-items:stretch;"></div>
+  <div class="modal hidden" id="m-day" onclick="if(S.dayModalOpenFilter&&!event.target.closest('#day-equip-drop')&&!event.target.closest('button[onclick*=toggleDayEquip]')){S.dayModalOpenFilter=false;renderDayModal();}event.stopPropagation()"></div>
+  <div class="modal hidden" id="m-weight" onclick="event.stopPropagation()" style="width:min(94vw,360px);border-radius:22px;padding:28px 24px;flex-direction:column;gap:0;"></div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+
+// ── Body-part color groups ────────────────────────────────────────────────────
+const BODY_COLORS = {
+  'waist':       {color:'#F0531C',soft:'rgba(240,83,28,.14)'},
+  'back':        {color:'#3B82F6',soft:'rgba(59,130,246,.15)'},
+  'chest':       {color:'#10B981',soft:'rgba(16,185,129,.15)'},
+  'upper legs':  {color:'#A78BFA',soft:'rgba(167,139,250,.16)'},
+  'lower legs':  {color:'#A78BFA',soft:'rgba(167,139,250,.16)'},
+  'upper arms':  {color:'#F472B6',soft:'rgba(244,114,182,.16)'},
+  'lower arms':  {color:'#F472B6',soft:'rgba(244,114,182,.16)'},
+  'shoulders':   {color:'#FB923C',soft:'rgba(251,146,60,.16)'},
+  'cardio':      {color:'#EF4444',soft:'rgba(239,68,68,.16)'},
+  'neck':        {color:'#94A3B8',soft:'rgba(148,163,184,.16)'},
+};
+function grp(bp) { return BODY_COLORS[(bp||'').toLowerCase()] || {color:'#9A9AA0',soft:'rgba(154,154,160,.15)'}; }
+
+const BODY_LABELS = {
+  pt: { 'waist':'Abdômen','back':'Costas','chest':'Peito','upper legs':'Coxas','lower legs':'Pernas','upper arms':'Bíceps/Tríceps','lower arms':'Antebraços','shoulders':'Ombros','cardio':'Cardio','neck':'Pescoço' },
+  es: { 'waist':'Cintura','back':'Espalda','chest':'Pecho','upper legs':'Muslos','lower legs':'Piernas','upper arms':'Brazos','lower arms':'Antebrazos','shoulders':'Hombros','cardio':'Cardio','neck':'Cuello' },
+  it: { 'waist':'Addome','back':'Schiena','chest':'Petto','upper legs':'Cosce','lower legs':'Gambe','upper arms':'Braccia','lower arms':'Avambracci','shoulders':'Spalle','cardio':'Cardio','neck':'Collo' },
+  tr: { 'waist':'Bel','back':'Sırt','chest':'Göğüs','upper legs':'Üst Bacak','lower legs':'Alt Bacak','upper arms':'Üst Kol','lower arms':'Alt Kol','shoulders':'Omuzlar','cardio':'Kardiyo','neck':'Boyun' },
+};
+
+const EQUIP_LABELS = {
+  pt: { 'body weight':'Peso corporal','barbell':'Barra','dumbbell':'Haltere','cable':'Cabo','machine':'Máquina','leverage machine':'Máq. alavanca','assisted':'Assistido','medicine ball':'Bola medicinal','band':'Elástico','kettlebell':'Kettlebell','smith machine':'Smith Machine','ez barbell':'Barra EZ','olympic barbell':'Barra olímpica','trap bar':'Barra trap','stability ball':'Bola equilíbrio','foam roll':'Rolo de espuma','roller':'Rolo','rope':'Corda','suspension':'Suspensão','weighted':'Com peso','wheel roller':'Roda abdominal','resistance band':'Faixa elástica','bosu ball':'Bosu','sled machine':'Trenó','tire':'Pneu','hammer':'Martelo' },
+  es: { 'body weight':'Peso corporal','barbell':'Barra','dumbbell':'Mancuerna','cable':'Cable','machine':'Máquina','leverage machine':'Máq. palanca','assisted':'Asistido','medicine ball':'Balón medicinal','band':'Banda','kettlebell':'Kettlebell','smith machine':'Smith Machine','ez barbell':'Barra EZ','olympic barbell':'Barra olímpica','stability ball':'Pelota equilibrio','foam roll':'Rodillo espuma','rope':'Cuerda','resistance band':'Banda resistencia' },
+  it: { 'body weight':'Peso corporeo','barbell':'Bilanciere','dumbbell':'Manubrio','cable':'Cavi','machine':'Macchina','leverage machine':'Macchina leva','assisted':'Assistito','medicine ball':'Palla medica','band':'Banda','kettlebell':'Kettlebell','smith machine':'Smith Machine','ez barbell':'Bilanciere EZ','olympic barbell':'Bilanciere olimpico','stability ball':'Palla equilibrio','foam roll':'Rullo schiuma','rope':'Corda','resistance band':'Banda resistenza' },
+  tr: { 'body weight':'Vücut ağırlığı','barbell':'Halter','dumbbell':'Dambıl','cable':'Kablo','machine':'Makine','leverage machine':'Kaldıraç mak.','assisted':'Destekli','medicine ball':'Tıp topu','band':'Bant','kettlebell':'Kettlebell','smith machine':'Smith Makinesi','ez barbell':'EZ Halter','olympic barbell':'Olimpik halter','stability ball':'Denge topu','foam roll':'Köpük rulo','rope':'İp','resistance band':'Direnç bandı' },
+};
+
+function tPart(bp) {
+  const lang = S.settings.lang;
+  if (!bp || lang === 'en') return bp || '';
+  return BODY_LABELS[lang]?.[(bp).toLowerCase()] || bp;
+}
+function tEquip(eq) {
+  const lang = S.settings.lang;
+  if (!eq || lang === 'en') return eq || '';
+  return EQUIP_LABELS[lang]?.[(eq).toLowerCase()] || eq;
+}
+
+const WEEK = [
+  {key:1,label:'Segunda'},{key:2,label:'Terça'},{key:3,label:'Quarta'},
+  {key:4,label:'Quinta'},{key:5,label:'Sexta'},{key:6,label:'Sábado'},{key:0,label:'Domingo'},
+];
+
+const LANG_OPTIONS = [
+  {code:'pt',label:'Português'},{code:'en',label:'Inglês'},{code:'es',label:'Espanhol'},
+  {code:'it',label:'Italiano'},{code:'tr',label:'Turco'},
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const S = {
+  token:    localStorage.getItem('fit_tok'),
+  user:     JSON.parse(localStorage.getItem('fit_usr') || 'null'),
+  settings: JSON.parse(localStorage.getItem('fit_settings') || '{"lang":"pt"}'),
+  view: 'exercises',
+  exs: [], total: 0, page: 1, totalPages: 1,
+  search: '', filters: {body_part:'', equipment:''}, meta: {parts:[], equip:[]},
+  openFilter: null,
+  plan: null,
+  restDays: JSON.parse(localStorage.getItem('fit_rest') || '{}'),
+  assignExId: null,
+  dayModalDay: null, dayModalSearch: '', dayModalFilters: {body_part:'',equipment:''}, dayModalOpenFilter: false, dayModalExs: [], dayModalPage: 1, dayModalTotal: 0,
+};
+
+const g = id => document.getElementById(id);
+function safeLS(key, fallback = []) { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch(e) { return fallback; } }
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const h = {'Content-Type':'application/json', ...(opts.headers||{})};
+  if (S.token) h.Authorization = `Bearer ${S.token}`;
+  const r = await fetch(API + path, {...opts, headers: h});
+  if (r.status === 204) return null;
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) { if (S.token) { clearAuth(); showAuthPage(); } throw new Error(d.detail || 'Não autorizado'); }
+  if (!r.ok) throw new Error(d.detail || d.error || `HTTP ${r.status}`);
+  return d;
+}
+function imgUrl(p) { return p ? `${API}/${p}` : ''; }
+
+const _WS_KEYS = ['fit_sessions','fit_ws_prefs','fit_weight_log'];
+function setAuth(tok, user) {
+  const prev = localStorage.getItem('fit_usr');
+  const prevId = prev ? JSON.parse(prev)?.id : null;
+  if (prevId !== user.id) _WS_KEYS.forEach(k => localStorage.removeItem(k));
+  S.token = tok; S.user = user;
+  localStorage.setItem('fit_tok', tok);
+  localStorage.setItem('fit_usr', JSON.stringify(user));
+}
+function clearAuth() {
+  S.token = null; S.user = null;
+  localStorage.removeItem('fit_tok'); localStorage.removeItem('fit_usr');
+  _WS_KEYS.forEach(k => localStorage.removeItem(k));
+}
+
+let _tt;
+function toast(msg, type='ok') {
+  const el = g('toast');
+  el.textContent = msg; el.className = `toast ${type}`;
+  clearTimeout(_tt); _tt = setTimeout(() => el.classList.add('hidden'), 3200);
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function openM(id) { g('overlay').classList.remove('hidden'); g(id).classList.remove('hidden'); }
+function closeAll() {
+  ['overlay','m-assign','m-day'].forEach(id => g(id).classList.add('hidden'));
+  const mw = g('m-weight'); if (mw) mw.classList.add('hidden');
+  S.assignExId = null; S.dayModalDay = null;
+}
+async function finishDayModal() {
+  closeAll();
+  await reloadPlan();
+  if (S.view === 'plans') { renderPlansView(); renderHeader(); }
+  else { renderHeader(); }
+}
+function onOvClick(e) { if (e.target === g('overlay')) closeAll(); }
+
+// ── Header ────────────────────────────────────────────────────────────────────
+function setTabStyle(id, active) {
+  g(id).style.cssText = `display:flex;align-items:center;gap:8px;height:38px;padding:0 18px;border:none;border-radius:10px;cursor:pointer;font:700 14px Manrope;white-space:nowrap;transition:background .15s,color .15s;background:${active?'rgba(255,255,255,.1)':'transparent'};color:${active?'#fff':'#9A9AA0'};`;
+}
+function renderHeader() {
+  setTabStyle('tab-ex', S.view === 'exercises');
+  setTabStyle('tab-pl', S.view === 'plans');
+  setTabStyle('tab-wk', S.view === 'workout');
+  const bnavMap = {exercises:'bnav-ex', plans:'bnav-pl', workout:'bnav-wk', settings:'bnav-st'};
+  ['bnav-ex','bnav-pl','bnav-wk','bnav-st'].forEach(id => {
+    const el = g(id); if (!el) return;
+    const active = bnavMap[S.view] === id;
+    el.style.color = active ? 'var(--accent)' : '#7C7C82';
+    const dot = g(id + '-dot'); if (dot) dot.style.opacity = active ? '1' : '0';
+  });
+
+  if (S.plan) {
+    const uniq = new Set();
+    S.plan.schedule.forEach(d => d.exercises.forEach(e => uniq.add(e.exercise.id)));
+    const cnt = uniq.size;
+    const badge = g('plan-badge');
+    if (cnt > 0) { badge.textContent = cnt; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+  if (S.user) {
+    g('user-avatar').textContent = S.user.name[0].toUpperCase();
+    g('user-name-hdr').textContent = S.user.name;
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+async function go(view) {
+  if ((view === 'plans' || view === 'workout' || view === 'settings') && !S.user) { showAuthPage(); return; }
+  S.view = view; renderHeader(); closeAll();
+  if (view === 'exercises') {
+    await loadExercises(1);
+    if (S.user && !S.plan) await ensurePlan();
+    renderExsView();
+    renderHeader();
+  } else if (view === 'plans') {
+    await ensurePlan();
+    await reloadPlan();
+    renderPlansView();
+    renderHeader();
+  } else if (view === 'settings') {
+    renderSettingsView();
+  } else if (view === 'workout') {
+    try {
+      await ensurePlan();
+      wsInitDay();
+      startWsTick();
+      renderWorkoutView();
+    } catch(e) {
+      toast(e.message || 'Erro ao carregar treino', 'err');
+      g('main').innerHTML = `<div style="padding:60px 20px;text-align:center;"><p style="color:#F44336;font:700 15px Manrope;">${e.message || 'Erro desconhecido'}</p><p style="color:#7C7C82;font-size:13px;margin-top:8px;">Tente recarregar a página.</p></div>`;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXERCISES VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function loadMeta() {
+  const [parts, equip] = await Promise.all([api('/body-parts'), api('/equipment')]);
+  S.meta = {parts, equip};
+}
+
+async function loadExercises(page = 1) {
+  const p = new URLSearchParams({page, limit:24});
+  if (S.search)            p.set('name', S.search);
+  if (S.filters.body_part) p.set('body_part', S.filters.body_part);
+  if (S.filters.equipment) p.set('equipment', S.filters.equipment);
+  const d = await api(`/exercises?${p}`);
+  S.exs = d.data; S.total = d.total; S.page = d.page; S.totalPages = d.totalPages;
+}
+
+function planAssignedDays(exId) {
+  if (!S.plan) return [];
+  const days = [];
+  S.plan.schedule.forEach(dayObj => {
+    if (dayObj.exercises.some(e => e.exercise.id === exId)) days.push(dayObj.day_of_week);
+  });
+  return days;
+}
+
+function renderExsView() {
+  const filtersActive = S.search || S.filters.body_part || S.filters.equipment;
+  const countLabel = filtersActive ? `${S.total} resultado${S.total===1?'':'s'}` : '1.324 exercícios';
+
+  const mkFilterBtn = (key, label, value, opts) => {
+    const hasValue = !!value;
+    const curLabel = hasValue ? (opts.find(o=>o.v===value)?.l || value) : label;
+    const isOpen = S.openFilter === key;
+    const allOpt = label === 'Parte do corpo' ? 'Todas' : 'Todos';
+    return `
+      <div data-filter="${key}" style="position:relative;">
+        <button onclick="toggleFilter('${key}')" style="display:flex;align-items:center;gap:9px;height:48px;padding:0 16px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid ${hasValue?'color-mix(in srgb,var(--accent) 40%,transparent)':'rgba(255,255,255,.09)'};color:${hasValue?'var(--accent-strong)':'#D4D4D8'};font:600 14px Manrope;cursor:pointer;white-space:nowrap;transition:border-color .15s;">
+          ${hasValue?`<span style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;"></span>`:''}
+          ${curLabel}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="opacity:.6;flex-shrink:0;"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        ${isOpen ? `<div style="position:absolute;top:calc(100% + 8px);left:0;z-index:40;min-width:200px;padding:6px;background:#141416;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.85);">
+          ${[{l:allOpt,v:''},...opts].map(o=>`
+            <button onclick="applyFilter('${key}','${o.v}')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 12px;border:none;border-radius:9px;background:transparent;color:${o.v===value?'#fff':'#C4C4C8'};font:600 14px Manrope;text-align:left;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">
+              ${o.l}
+              ${o.v===value?`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>`:''}
+            </button>`).join('')}
+        </div>` : ''}
+      </div>`;
+  };
+
+  const partOpts = S.meta.parts.map(p=>({l:tPart(p),v:p}));
+  const equipOpts = S.meta.equip.map(e=>({l:tEquip(e),v:e}));
+
+  g('main').innerHTML = `
+    <div>
+      <div style="margin-bottom:26px;">
+        <h1 style="margin:0;font:800 clamp(24px,3vw,30px) Manrope;letter-spacing:-.02em;color:#F7F7F6;">Biblioteca de exercícios</h1>
+        <p style="margin:6px 0 0;color:#8E8E94;font-size:14.5px;">Toque em um exercício para adicioná-lo aos seus dias de treino.</p>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px;">
+        <div style="position:relative;flex:1 1 280px;min-width:240px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A7A80" stroke-width="2" stroke-linecap="round" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4-4"></path></svg>
+          <input type="text" value="${S.search}" oninput="onSearch(this.value)" placeholder="Buscar exercício..." style="width:100%;height:48px;padding:0 16px 0 44px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F3F3F4;font:500 15px Manrope;outline:none;transition:border-color .18s,box-shadow .18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'" onblur="this.style.borderColor='rgba(255,255,255,.09)';this.style.boxShadow='none'">
+        </div>
+        ${mkFilterBtn('body_part','Parte do corpo',S.filters.body_part,partOpts)}
+        ${mkFilterBtn('equipment','Equipamento',S.filters.equipment,equipOpts)}
+        <button onclick="loadRand()" style="display:flex;align-items:center;gap:9px;height:48px;padding:0 18px;border-radius:13px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);color:var(--accent-strong);font:700 14px Manrope;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='color-mix(in srgb,var(--accent) 22%,transparent)'" onmouseout="this.style.background='var(--accent-soft)'">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg>
+          Aleatório
+        </button>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+        <span style="color:#8E8E94;font-size:13.5px;font-weight:600;">${countLabel}</span>
+        ${filtersActive?`<button onclick="clearFilters()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:#9A9AA0;font:600 13px Manrope;cursor:pointer;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#9A9AA0'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>Limpar filtros</button>`:''}
+      </div>
+
+      ${S.exs.length ? `
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:18px;">
+          ${S.exs.map(ex => exCard(ex)).join('')}
+        </div>
+        <div class="pag">
+          <button class="pag-btn" onclick="goPage(${S.page-1})" ${S.page<=1?'disabled':''}>← Anterior</button>
+          <span class="pag-info">Página ${S.page} de ${S.totalPages}</span>
+          <button class="pag-btn" onclick="goPage(${S.page+1})" ${S.page>=S.totalPages?'disabled':''}>Próxima →</button>
+        </div>` : `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:72px 20px;text-align:center;">
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#3A3A40" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4-4"></path></svg>
+          <div><p style="margin:0;color:#C4C4C8;font-size:16px;font-weight:700;">Nenhum exercício encontrado</p><p style="margin:6px 0 0;color:#7A7A80;font-size:14px;">Tente ajustar a busca ou os filtros.</p></div>
+          <button onclick="clearFilters()" style="height:44px;padding:0 20px;border:1px solid rgba(255,255,255,.14);border-radius:11px;background:transparent;color:#E4E4E8;font:700 14px Manrope;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background='transparent'">Limpar filtros</button>
+        </div>`}
+    </div>`;
+}
+
+function exCard(ex) {
+  const c = grp(ex.body_part);
+  const days = planAssignedDays(ex.id);
+  const assigned = days.length > 0;
+  const img = imgUrl(ex.image);
+  return `
+    <article onclick="openAssign('${ex.id}')" style="position:relative;display:flex;flex-direction:column;background:#131315;border:1px solid ${assigned?c.color:'rgba(255,255,255,.07)'};border-radius:18px;overflow:hidden;cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s;box-shadow:${assigned?`0 0 0 1px ${c.color},0 10px 30px -14px ${c.color}`:'none'};" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 18px 40px -18px rgba(0,0,0,.7)'" onmouseout="this.style.transform='';this.style.boxShadow='${assigned?`0 0 0 1px ${c.color},0 10px 30px -14px ${c.color}`:'none'}'">
+      <div style="position:relative;aspect-ratio:4/3;background:linear-gradient(160deg,${c.soft},#0e0e10);overflow:hidden;">
+        ${img?`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover;">`:``}
+        <div style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:6px;padding:5px 9px 5px 7px;border-radius:999px;background:${assigned?c.color:'rgba(255,255,255,.9)'};border:1.5px solid ${assigned?c.color:'rgba(0,0,0,.08)'};color:${assigned?'#fff':'#3A3A40'};font:800 12px Manrope;z-index:1;">
+          ${assigned
+            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>${days.length} dia${days.length===1?'':'s'}`
+            : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>`}
+        </div>
+      </div>
+      <div style="padding:14px 15px 16px;display:flex;flex-direction:column;gap:11px;flex:1;">
+        <h3 style="margin:0;font:600 14.5px Manrope;line-height:1.32;color:#ECECEE;text-transform:capitalize;">${ex.name}</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:auto;">
+          ${ex.body_part?`<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:${c.soft};color:${c.color};font-size:11.5px;font-weight:700;"><span style="width:6px;height:6px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>${tPart(ex.body_part)}</span>`:''}
+          ${ex.equipment?`<span style="padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.05);color:#A6A6AC;font-size:11.5px;font-weight:600;">${tEquip(ex.equipment)}</span>`:''}
+        </div>
+      </div>
+    </article>`;
+}
+
+let _searchTimer;
+function onSearch(v) {
+  S.search = v; S.openFilter = null;
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(async () => { await loadExercises(1); renderExsView(); }, 400);
+}
+function toggleFilter(key) { S.openFilter = S.openFilter===key ? null : key; renderExsView(); }
+async function applyFilter(key, value) { S.filters[key]=value; S.openFilter=null; await loadExercises(1); renderExsView(); }
+async function clearFilters() { S.search=''; S.filters={body_part:'',equipment:''}; S.openFilter=null; await loadExercises(1); renderExsView(); }
+async function goPage(p) { if(p<1||p>S.totalPages) return; await loadExercises(p); renderExsView(); window.scrollTo(0,0); }
+async function loadRand() { const ex = await api('/exercises/random'); openAssign(ex.id, ex); }
+
+document.addEventListener('click', e => {
+  if (S.openFilter && !e.target.closest('[data-filter]')) { S.openFilter=null; renderExsView(); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ASSIGN EXERCISE → DAYS MODAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _exCache = {};
+
+async function openAssign(exId, exObj) {
+  if (!S.user) { showAuthPage('login'); return; }
+  await ensurePlan();
+  S.assignExId = exId;
+  if (exObj) _exCache[exId] = exObj;
+  else if (!_exCache[exId]) _exCache[exId] = S.exs.find(e=>e.id===exId);
+  if (!_exCache[exId]) {
+    try { _exCache[exId] = await api(`/exercises/${exId}`); } catch(e) {}
+  }
+  renderAssignModal();
+  openM('m-assign');
+  _loadExInstr(exId);
+  _loadExInsights(exId);
+  _loadExAlts(exId);
+}
+
+async function _loadExInsights(exId) {
+  if (!_exCache[exId]) return;
+  const lang = S.settings.lang || 'en';
+  // Cache hit: already loaded in the right language (or translation confirmed)
+  if (_exCache[exId]._insights !== undefined && _exCache[exId]._insights_lang === lang) return;
+  const qs = lang === 'pt' ? '?lang=pt' : '';
+  try {
+    const ins = await api(`/exercises/${exId}/insights${qs}`);
+    _exCache[exId]._insights = ins;
+    // If Argos wasn't ready (_translated===false), keep lang as 'en' so we retry next open
+    _exCache[exId]._insights_lang = (lang === 'pt' && ins._translated === false) ? 'en' : lang;
+  } catch(e) {
+    _exCache[exId]._insights = null;
+    _exCache[exId]._insights_lang = lang;
+  }
+  if (S.assignExId === exId) renderAssignModal();
+}
+
+async function _loadExInstr(exId) {
+  const ex = _exCache[exId];
+  if (!ex) return;
+  const lang = S.settings.lang;
+  if (ex._instr_lang === lang && ex._instr !== undefined) return;
+  let text = '';
+  if (lang === 'en') {
+    text = ex.instructions_en || '';
+  } else if (lang !== 'pt' && ex[`instructions_${lang}`]) {
+    text = ex[`instructions_${lang}`];
+  } else if (ex.instructions_en) {
+    if (lang === 'pt') {
+      try {
+        const d = await api('/translate', {method:'POST', body:JSON.stringify({text:ex.instructions_en, source:'en', target:'pt'})});
+        text = d.translated || ex.instructions_en;
+      } catch(e) { text = ex.instructions_en; }
+    } else {
+      text = ex.instructions_en;
+    }
+  }
+  _exCache[exId]._instr = text;
+  _exCache[exId]._instr_lang = lang;
+  if (S.assignExId === exId) renderAssignModal();
+}
+
+function _sparkline(values, w, h) {
+  if (!values || values.length < 2) return '';
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const pad = 4;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * (w - pad * 2) + pad;
+    const y = (h - pad) - ((v - min) / range) * (h - pad * 2) + pad;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const lx = (w - pad).toFixed(1);
+  const ly = ((h - pad) - ((values[values.length-1] - min) / range) * (h - pad * 2) + pad).toFixed(1);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block;">
+    <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+    <circle cx="${lx}" cy="${ly}" r="3" fill="var(--accent)"/>
+  </svg>`;
+}
+
+async function _loadExAlts(exId) {
+  if (!_exCache[exId]) return;
+  if (_exCache[exId]._alts !== undefined) return;
+  try {
+    _exCache[exId]._alts = await api(`/exercises/${exId}/alternatives`);
+  } catch(e) {
+    _exCache[exId]._alts = null;
+  }
+  if (S.assignExId === exId) renderAssignModal();
+}
+
+const DIFF_LABELS = {
+  pt: {beginner:'Iniciante',intermediate:'Intermediário',expert:'Avançado',advanced:'Avançado'},
+  es: {beginner:'Principiante',intermediate:'Intermedio',expert:'Avanzado',advanced:'Avanzado'},
+  it: {beginner:'Principiante',intermediate:'Intermedio',expert:'Avanzato',advanced:'Avanzato'},
+  tr: {beginner:'Başlangıç',intermediate:'Orta',expert:'İleri',advanced:'İleri'},
+};
+const CAT_LABELS = {
+  pt: {strength:'Força',stretching:'Alongamento',cardio:'Cardio',plyometrics:'Pliometria',powerlifting:'Powerlifting','olympic weightlifting':'Halterofilismo',strongman:'Strongman'},
+  es: {strength:'Fuerza',stretching:'Estiramiento',cardio:'Cardio',plyometrics:'Pliometría',powerlifting:'Powerlifting','olympic weightlifting':'Halterofilia',strongman:'Strongman'},
+  it: {strength:'Forza',stretching:'Stretching',cardio:'Cardio',plyometrics:'Pliometria',powerlifting:'Powerlifting','olympic weightlifting':'Sollevamento pesi',strongman:'Strongman'},
+  tr: {strength:'Güç',stretching:'Esneme',cardio:'Kardiyo',plyometrics:'Pliometri',powerlifting:'Powerlifting','olympic weightlifting':'Halter',strongman:'Strongman'},
+};
+function tDiff(d) { const lang=S.settings.lang; return d?(DIFF_LABELS[lang]?.[(d||'').toLowerCase()]||d):'—'; }
+function tCat(c)  { const lang=S.settings.lang; return c?(CAT_LABELS[lang]?.[(c||'').toLowerCase()]||c):'—'; }
+
+function renderAssignModal() {
+  const ex = _exCache[S.assignExId];
+  const c = ex ? grp(ex.body_part) : {color:'#9A9AA0',soft:'rgba(154,154,160,.15)'};
+  const name = ex?.name || S.assignExId;
+  const mediaUrl = ex?.gif_url ? imgUrl(ex.gif_url) : (ex?.image ? imgUrl(ex.image) : '');
+  const lang = S.settings.lang;
+
+  let instrText = '';
+  if (ex?._instr_lang === lang && ex?._instr !== undefined) instrText = ex._instr;
+  else if (ex) instrText = (lang!=='en'&&lang!=='pt'&&ex[`instructions_${lang}`]) ? ex[`instructions_${lang}`] : (ex.instructions_en||'');
+
+  // Parse instructions into numbered steps (split on ". ")
+  const steps = instrText
+    ? instrText.split(/\.\s+/).map(s=>s.trim().replace(/\.$/,'')).filter(s=>s.length>8)
+    : [];
+
+  const assignedDays = planAssignedDays(S.assignExId);
+  const inPlan = assignedDays.length > 0;
+
+  // Day pills (compact horizontal)
+  const dayPills = WEEK.map(d => {
+    const on = assignedDays.includes(d.key);
+    return `<button onclick="toggleExDay('${S.assignExId}',${d.key})" style="height:36px;min-width:50px;padding:0 13px;border-radius:9px;border:1px solid ${on?'var(--accent)':'rgba(255,255,255,.1)'};background:${on?'var(--accent)':'rgba(255,255,255,.04)'};color:${on?'#fff':'#C4C4C8'};font:700 13px Manrope;cursor:pointer;transition:all .14s;" onmouseover="this.style.filter='brightness(1.08)'" onmouseout="this.style.filter=''">${d.label.slice(0,3)}</button>`;
+  }).join('');
+
+  // Stats
+  const diff = ex?.difficulty || ex?.level;
+  const cat  = ex?.category;
+  const secondary = Array.isArray(ex?.secondary_muscles) ? ex.secondary_muscles : (typeof ex?.secondary_muscles==='string'?JSON.parse(ex.secondary_muscles||'[]'):[]);
+  const target = ex?.target || '';
+
+  g('m-assign').innerHTML = `
+    <!-- ── Left: image panel ── -->
+    <div style="position:relative;flex:1 1 320px;min-height:clamp(300px,45vw,520px);background:radial-gradient(60% 55% at 50% 40%,${c.soft},transparent 68%),#0e0e10;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+      ${mediaUrl?`<img src="${mediaUrl}" alt="" style="width:100%;height:100%;object-fit:contain;padding:clamp(12px,3%,28px);">`:``}
+      <span style="position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:rgba(10,10,13,.84);backdrop-filter:blur(10px);color:${c.color};font-size:11.5px;font-weight:800;border:1px solid ${c.color}40;z-index:1;">
+        <span style="width:6px;height:6px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>${tPart(ex?.body_part)||''}
+      </span>
+    </div>
+
+    <!-- ── Right: content ── -->
+    <div style="position:relative;flex:1 1 420px;display:flex;flex-direction:column;max-height:92dvh;overflow-y:auto;padding:clamp(22px,3vw,34px);">
+      <button onclick="closeAll()" aria-label="Fechar" style="position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:none;color:#B0B0B6;cursor:pointer;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.color='#B0B0B6'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+      </button>
+
+      <h1 style="margin:0 44px 0 0;font:800 clamp(20px,2.5vw,28px) Manrope;letter-spacing:-.02em;line-height:1.2;color:#F7F7F6;text-transform:capitalize;">${name}</h1>
+
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;">
+        ${ex?.body_part?`<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;background:${c.soft};color:${c.color};font-size:12px;font-weight:700;"><span style="width:6px;height:6px;border-radius:50%;background:${c.color};"></span>${tPart(ex.body_part)}</span>`:''}
+        ${ex?.equipment?`<span style="padding:5px 11px;border-radius:8px;background:rgba(255,255,255,.05);color:#B6B6BC;font-size:12px;font-weight:600;">${tEquip(ex.equipment)}</span>`:''}
+        ${cat?`<span style="padding:5px 11px;border-radius:8px;background:rgba(255,255,255,.05);color:#B6B6BC;font-size:12px;font-weight:600;">${tCat(cat)}</span>`:''}
+      </div>
+
+      <!-- Stat tiles (only render tiles that have data) -->
+      ${(()=>{
+        const tiles = [];
+        if (ex?.equipment)  tiles.push({l:'Equipamento', v:tEquip(ex.equipment)});
+        if (diff)           tiles.push({l:'Dificuldade',  v:tDiff(diff)});
+        if (cat)            tiles.push({l:'Categoria',    v:tCat(cat)});
+        if (!tiles.length)  return '';
+        const cols = tiles.length === 1 ? '1fr' : tiles.length === 2 ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
+        return `<div style="display:grid;grid-template-columns:${cols};gap:9px;margin-top:18px;">
+          ${tiles.map(s=>`
+            <div style="padding:11px 13px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);">
+              <div style="color:#7C7C82;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">${s.l}</div>
+              <div style="margin-top:4px;color:#ECECEE;font-size:13px;font-weight:700;text-transform:capitalize;">${s.v}</div>
+            </div>`).join('')}
+        </div>`;
+      })()}
+
+      <!-- Muscles -->
+      ${(target||secondary.length>0)?`
+      <div style="margin-top:20px;">
+        <div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;">Músculos trabalhados</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;">
+          ${target?`<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:9px;background:${c.soft};color:${c.color};font-size:12.5px;font-weight:700;border:1px solid ${c.color}44;">${target} <span style="font-size:9.5px;font-weight:800;opacity:.7;">PRINCIPAL</span></span>`:''}
+          ${secondary.map(m=>`<span style="padding:5px 11px;border-radius:9px;background:rgba(255,255,255,.05);color:#B6B6BC;font-size:12.5px;font-weight:600;">${m}</span>`).join('')}
+        </div>
+      </div>`:''}
+
+      <!-- Weight history chart -->
+      ${(()=>{
+        const log = JSON.parse(localStorage.getItem('fit_weight_log')||'[]').filter(e=>e.exId===S.assignExId);
+        if (!log.length) return '';
+        const byDate = {};
+        log.forEach(e=>{ if (!byDate[e.date]||e.weight>byDate[e.date]) byDate[e.date]=e.weight; });
+        const pts = Object.keys(byDate).sort().slice(-10).map(d=>({d,w:byDate[d]}));
+        if (pts.length < 2) return '';
+        const chart = _sparkline(pts.map(p=>p.w), 260, 44);
+        return `<div style="margin-top:18px;padding:14px 16px;border-radius:13px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Evolução de peso</span>
+            <span style="color:var(--accent);font:700 13px Manrope;">${pts[pts.length-1].w} kg</span>
+          </div>
+          ${chart}
+          <div style="display:flex;justify-content:space-between;margin-top:6px;">
+            <span style="color:#4C4C52;font-size:10px;">${pts[0].d.slice(5)}</span>
+            <span style="color:#4C4C52;font-size:10px;">${pts[pts.length-1].d.slice(5)}</span>
+          </div>
+        </div>`;
+      })()}
+
+      <!-- LLM Insights -->
+      ${(()=>{
+        const ins = ex?._insights;
+        if (!ins) return ex && ex._insights === undefined ? `<div style="margin-top:18px;padding:13px;border-radius:13px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);color:#5C5C62;font-size:12px;text-align:center;">Carregando insights...</div>` : '';
+        const DIFF_COLORS = {beginner:'#4CAF50',intermediate:'#FF9800',advanced:'#F0531C'};
+        const RISK_COLORS = {low:'#4CAF50',medium:'#FF9800',high:'#F44336'};
+        const DIFF_PT = {beginner:'Iniciante',intermediate:'Intermediário',advanced:'Avançado'};
+        const EFFORT_PT = {strength:'Força',cardio:'Cardio',flexibility:'Flexibilidade',balance:'Equilíbrio'};
+        const RISK_PT = {low:'Baixo',medium:'Médio',high:'Alto'};
+        const diffColor = DIFF_COLORS[ins.difficulty] || '#9A9AA0';
+        const riskColor = RISK_COLORS[ins.injury_risk] || '#9A9AA0';
+        const weightKg = S.user?.weight_kg || 70;
+        const calPerMin = ins.calories_per_min_met ? Math.round(ins.calories_per_min_met * weightKg * 3.5 / 200 * 10) / 10 : null;
+        const insTiles = [];
+        if (ins.difficulty)   insTiles.push({l:'Nível', v:DIFF_PT[ins.difficulty]||ins.difficulty, color:diffColor});
+        if (ins.effort_type)  insTiles.push({l:'Tipo de esforço', v:EFFORT_PT[ins.effort_type]||ins.effort_type, color:'#ECECEE'});
+        if (calPerMin)        insTiles.push({l:'Kcal/min (~'+weightKg+'kg)', v:'~'+calPerMin, color:'#ECECEE'});
+        if (ins.injury_risk)  insTiles.push({l:'Risco de lesão', v:RISK_PT[ins.injury_risk]||ins.injury_risk, color:riskColor});
+        const cols = insTiles.length <= 2 ? 'repeat(2,1fr)' : 'repeat(2,1fr)';
+        const tilesHtml = insTiles.length ? `<div style="display:grid;grid-template-columns:${cols};gap:9px;margin-top:18px;">${insTiles.map(t=>`<div style="padding:11px 13px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);"><div style="color:#7C7C82;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">${t.l}</div><div style="margin-top:4px;color:${t.color};font-size:13px;font-weight:700;">${t.v}</div></div>`).join('')}</div>` : '';
+        const mistakesHtml = ins.common_mistakes?.length ? `<div style="margin-top:20px;"><div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;">Erros comuns</div><ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">${ins.common_mistakes.map(m=>`<li style="display:flex;gap:9px;align-items:flex-start;"><span style="flex:none;margin-top:5px;width:6px;height:6px;border-radius:50%;background:#F0531C;"></span><span style="color:#C4C4CA;font-size:13.5px;line-height:1.5;">${m}</span></li>`).join('')}</ul></div>` : '';
+        const benefitsHtml = ins.benefits?.length ? `<div style="margin-top:20px;"><div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;">Benefícios</div><ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">${ins.benefits.map(b=>`<li style="display:flex;gap:9px;align-items:flex-start;"><span style="flex:none;margin-top:5px;width:6px;height:6px;border-radius:50%;background:#4CAF50;"></span><span style="color:#C4C4CA;font-size:13.5px;line-height:1.5;">${b}</span></li>`).join('')}</ul></div>` : '';
+        const variationsHtml = (ins.easier_variation||ins.harder_variation) ? `<div style="margin-top:20px;"><div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;">Variações</div><div style="display:flex;flex-direction:column;gap:8px;">${ins.easier_variation?`<div style="padding:10px 13px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);"><span style="color:#7C7C82;font-size:11px;font-weight:700;text-transform:uppercase;">Mais fácil · </span><span style="color:#C4C4CA;font-size:13px;">${ins.easier_variation}</span></div>`:''}${ins.harder_variation?`<div style="padding:10px 13px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);"><span style="color:#7C7C82;font-size:11px;font-weight:700;text-transform:uppercase;">Mais difícil · </span><span style="color:#C4C4CA;font-size:13px;">${ins.harder_variation}</span></div>`:''}</div></div>` : '';
+        return tilesHtml + mistakesHtml + benefitsHtml + variationsHtml;
+      })()}
+
+      <!-- Instructions -->
+      ${steps.length>0?`
+      <div style="margin-top:22px;">
+        <h2 style="margin:0 0 13px;font:800 16px Manrope;color:#F2F2F4;">Como executar</h2>
+        <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;">
+          ${steps.map((t,i)=>`
+            <li style="display:flex;gap:13px;align-items:flex-start;">
+              <span style="flex:none;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${c.soft};color:${c.color};font:800 13px Manrope;border:1px solid ${c.color}44;">${i+1}</span>
+              <p style="margin:0;color:#C4C4CA;font-size:14px;line-height:1.55;padding-top:2px;">${t}.</p>
+            </li>`).join('')}
+        </ol>
+      </div>`
+      : instrText?`
+      <div style="margin-top:22px;">
+        <h2 style="margin:0 0 10px;font:800 16px Manrope;color:#F2F2F4;">Como executar</h2>
+        <p style="margin:0;color:#C4C4CA;font-size:14px;line-height:1.6;">${instrText}</p>
+      </div>`:''}
+
+      <!-- Alternatives -->
+      ${(()=>{
+        const alts = ex?._alts;
+        if (!alts || !alts.length) return '';
+        return `<div style="margin-top:22px;">
+          <div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:11px;">Exercícios similares</div>
+          <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;">
+            ${alts.map(a=>{
+              const ac=grp(a.body_part);
+              return `<div onclick="openAssign('${a.id}')" style="flex:none;width:138px;padding:12px;border-radius:13px;background:#0e0e10;border:1px solid rgba(255,255,255,.07);cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">
+                <span style="display:inline-block;padding:3px 9px;border-radius:7px;background:${ac.soft};color:${ac.color};font-size:10.5px;font-weight:700;text-transform:capitalize;">${tPart(a.body_part)}</span>
+                <p style="margin:8px 0 0;color:#DCDCE0;font:600 12.5px Manrope;line-height:1.4;text-transform:capitalize;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${a.name}</p>
+                <p style="margin:5px 0 0;color:#5C5C62;font-size:11px;text-transform:capitalize;">${a.equipment||''}</p>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      })()}
+
+      <!-- Day picker + CTA -->
+      <div style="margin-top:auto;padding-top:24px;">
+        <div style="margin-bottom:12px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);">
+          <div style="color:#9A9AA0;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;">Em quais dias você vai fazer?</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;">${dayPills}</div>
+        </div>
+        <button onclick="closeAll()" style="width:100%;height:54px;display:flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:14px;cursor:pointer;font:800 15.5px Manrope;color:${inPlan?'var(--accent)':'#fff'};background:${inPlan?'rgba(255,255,255,.05)':'linear-gradient(180deg,var(--accent-strong),var(--accent-deep))'};box-shadow:${inPlan?'inset 0 0 0 1px color-mix(in srgb,var(--accent) 42%,transparent)':'0 12px 32px -12px color-mix(in srgb,var(--accent) 60%,transparent)'};transition:all .18s;" onmouseover="this.style.filter='brightness(1.07)'" onmouseout="this.style.filter=''">
+          ${inPlan
+            ?`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>${assignedDays.length} dia${assignedDays.length===1?'':'s'} no plano`
+            :`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Adicionar ao Plano`}
+        </button>
+      </div>
+    </div>`;
+}
+
+async function toggleExDay(exId, dayKey) {
+  await ensurePlan();
+  const dayObj = S.plan.schedule.find(s=>s.day_of_week===dayKey);
+  const entry = dayObj?.exercises.find(e=>e.exercise.id===exId);
+  try {
+    if (entry) {
+      await api(`/plans/${S.plan.id}/schedule/${entry.entry_id}`, {method:'DELETE'});
+    } else {
+      if (S.restDays[dayKey]) { S.restDays[dayKey]=false; localStorage.setItem('fit_rest',JSON.stringify(S.restDays)); }
+      await api(`/plans/${S.plan.id}/schedule`, {method:'POST', body:JSON.stringify({day_of_week:dayKey,exercise_id:exId,sets:3,reps:10,rest_seconds:60})});
+    }
+    await reloadPlan();
+    renderAssignModal();
+    renderHeader();
+    if (S.view==='exercises') renderExsView();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLANS VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function ensurePlan() {
+  if (S.plan) return;
+  const plans = await api('/plans');
+  if (plans.length) {
+    S.plan = await api(`/plans/${plans[0].id}`);
+  } else {
+    const p = await api('/plans', {method:'POST', body:JSON.stringify({name:'Meu Plano',focus:'custom'})});
+    S.plan = await api(`/plans/${p.id}`);
+  }
+}
+
+async function reloadPlan() {
+  if (!S.plan) return;
+  S.plan = await api(`/plans/${S.plan.id}`);
+}
+
+function dayExercises(dayKey) {
+  return S.plan?.schedule.find(d=>d.day_of_week===dayKey)?.exercises || [];
+}
+
+function renderPlansView() {
+  const uniq = new Set();
+  if (S.plan) S.plan.schedule.forEach(d=>d.exercises.forEach(e=>uniq.add(e.exercise.id)));
+  const total = uniq.size;
+  const daysActive = WEEK.filter(d => dayExercises(d.key).length>0 && !S.restDays[d.key]).length;
+  const subtitle = total > 0
+    ? `${total} exercício${total===1?'':'s'} em ${daysActive} dia${daysActive===1?'':'s'} de treino`
+    : 'Escolha os dias e adicione os exercícios de cada treino.';
+
+  g('main').innerHTML = `
+    <div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+        <div>
+          <h1 style="margin:0;font:800 clamp(24px,3vw,30px) Manrope;letter-spacing:-.02em;color:#F7F7F6;">Meu plano semanal</h1>
+          <p style="margin:6px 0 0;color:#8E8E94;font-size:14.5px;">${subtitle}</p>
+        </div>
+        ${total>0?`<button onclick="clearPlan()" style="height:46px;padding:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:transparent;color:#C4C4C8;font:600 14px Manrope;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.05)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#C4C4C8'">Limpar plano</button>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;align-items:start;">
+        ${WEEK.map(d=>dayCard(d)).join('')}
+      </div>
+      ${total>0?`
+      <div style="margin-top:28px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+          <span style="font:700 11.5px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.06em;">Sugestões de progressão</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+        </div>
+        <div id="plan-progression" style="color:#5C5C62;font-size:13px;text-align:center;padding:16px;">Carregando sugestões...</div>
+      </div>`:''}
+    </div>`;
+  if (total>0) loadPlanProgression();
+}
+
+async function loadPlanProgression() {
+  const el = g('plan-progression');
+  if (!el || !S.plan) return;
+  try {
+    const data = await api(`/plans/${S.plan.id}/progression`);
+    const days = data.progression.filter(d => d.exercises.length > 0);
+    if (!days.length) { el.innerHTML = '<p style="color:#5C5C62;padding:8px;text-align:center;">Insights não disponíveis — rode o script de enriquecimento.</p>'; return; }
+    const TC = {reps:'#4CAF50',sets:'#2196F3',variation:'#F0531C',weight:'#FF9800'};
+    const TL = {reps:'↑ reps',sets:'+ série',variation:'→ variação',weight:'↑ carga'};
+    el.innerHTML = days.map(d=>`
+      <div style="margin-bottom:14px;">
+        <p style="margin:0 0 8px;font:700 12px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.05em;">${d.day}</p>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          ${d.exercises.map(ex=>{
+            const sc=TC[ex.suggestion.type]||'#9A9AA0';
+            return `<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;background:#121214;border:1px solid rgba(255,255,255,.06);">
+              <div style="flex:1;min-width:0;">
+                <p style="margin:0;font:600 13px Manrope;color:#DCDCE0;text-transform:capitalize;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${ex.exercise_name}</p>
+                <p style="margin:4px 0 0;color:#7C7C82;font-size:12px;">${ex.current.sets}×${ex.current.reps} → <span style="color:#DCDCE0;font-weight:700;">${ex.suggestion.sets}×${ex.suggestion.reps}</span>${ex.suggestion.type==='variation'&&ex.harder_variation?` <span style="color:var(--accent);">→ ${ex.harder_variation}</span>`:''}</p>
+              </div>
+              <span style="flex:none;padding:3px 9px;border-radius:7px;background:${sc}22;color:${sc};font:700 11px Manrope;">${TL[ex.suggestion.type]||ex.suggestion.type}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    const el2=g('plan-progression'); if(el2) el2.innerHTML='<p style="color:#5C5C62;padding:8px;text-align:center;">Não foi possível carregar as sugestões.</p>';
+  }
+}
+
+function dayCard(d) {
+  const exs = dayExercises(d.key);
+  const isRest = !!S.restDays[d.key];
+  const hasBorder = exs.length>0 && !isRest;
+  return `
+    <section style="display:flex;flex-direction:column;background:#121214;border:1px solid ${hasBorder?'color-mix(in srgb,var(--accent) 26%,transparent)':'rgba(255,255,255,.07)'};border-radius:18px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span style="font:800 15px Manrope;color:#F2F2F4;">${d.label}</span>
+          ${exs.length>0&&!isRest?`<span style="min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:var(--accent-soft);color:var(--accent-strong);font-size:11px;font-weight:800;">${exs.length}</span>`:''}
+        </div>
+        <button onclick="toggleRest(${d.key})" title="Dia de descanso" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid ${isRest?'color-mix(in srgb,var(--accent) 34%,transparent)':'rgba(255,255,255,.12)'};background:${isRest?'var(--accent-soft)':'transparent'};color:${isRest?'var(--accent-strong)':'#8A8A90'};cursor:pointer;transition:all .15s;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+      ${isRest ? `
+        <div style="padding:26px 16px;text-align:center;">
+          <p style="margin:0;color:#7E7E84;font-size:13.5px;font-weight:600;">Dia de descanso</p>
+          <button onclick="toggleRest(${d.key})" style="margin-top:10px;background:none;border:none;color:var(--accent);font:700 13px Manrope;cursor:pointer;">Treinar neste dia</button>
+        </div>` : `
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px;">
+          ${exs.map(entry=>dayExItem(entry)).join('')}
+          ${exs.length===0?`<p style="margin:2px 0 4px;text-align:center;color:#62626A;font-size:12.5px;">Nenhum exercício ainda</p>`:''}
+          <button onclick="openDayModal(${d.key})" style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border:1px dashed rgba(255,255,255,.16);border-radius:11px;background:transparent;color:#A6A6AC;font:700 13px Manrope;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent-strong)';this.style.background='var(--accent-soft)'" onmouseout="this.style.borderColor='rgba(255,255,255,.16)';this.style.color='#A6A6AC';this.style.background='transparent'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+            Adicionar exercício
+          </button>
+        </div>`}
+    </section>`;
+}
+
+function dayExItem(entry) {
+  const ex = entry.exercise;
+  const c = grp(ex.body_part);
+  return `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:11px;">
+      <span style="flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${c.soft};"><span style="width:7px;height:7px;border-radius:50%;background:${c.color};"></span></span>
+      <span style="flex:1;min-width:0;font:600 13px Manrope;color:#DCDCE0;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</span>
+      <button onclick="removeEntry(${entry.entry_id})" style="flex:none;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#7A7A80;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='rgba(244,63,63,.14)';this.style.color='#F87171'" onmouseout="this.style.background='transparent';this.style.color='#7A7A80'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>`;
+}
+
+async function removeEntry(entryId) {
+  await api(`/plans/${S.plan.id}/schedule/${entryId}`, {method:'DELETE'});
+  await reloadPlan(); renderPlansView(); renderHeader();
+}
+
+function toggleRest(dayKey) {
+  S.restDays[dayKey] = !S.restDays[dayKey];
+  localStorage.setItem('fit_rest', JSON.stringify(S.restDays));
+  renderPlansView();
+}
+
+async function clearPlan() {
+  if (!S.plan) return;
+  await api(`/plans/${S.plan.id}`, {method:'DELETE'});
+  S.plan = null; S.restDays = {}; localStorage.setItem('fit_rest','{}');
+  await ensurePlan(); renderPlansView(); renderHeader(); toast('Plano limpo!');
+}
+
+// ── Add exercise to a day modal ───────────────────────────────────────────────
+async function openDayModal(dayKey) {
+  S.dayModalDay = dayKey; S.dayModalSearch = ''; S.dayModalPage = 1;
+  S.dayModalFilters = {body_part:'', equipment:''}; S.dayModalOpenFilter = false;
+  await loadDayModalExs();
+  renderDayModal();
+  openM('m-day');
+}
+
+async function loadDayModalExs(page=1) {
+  const p = new URLSearchParams({page, limit:20});
+  if (S.dayModalSearch)               p.set('name',      S.dayModalSearch);
+  if (S.dayModalFilters.body_part)    p.set('body_part',  S.dayModalFilters.body_part);
+  if (S.dayModalFilters.equipment)    p.set('equipment',  S.dayModalFilters.equipment);
+  const d = await api(`/exercises?${p}`);
+  S.dayModalExs = d.data; S.dayModalPage = d.page; S.dayModalTotal = d.total;
+}
+
+function renderDayModal() {
+  const day = WEEK.find(d=>d.key===S.dayModalDay);
+  const curExs = dayExercises(S.dayModalDay);
+  const totalPages = Math.ceil(S.dayModalTotal/20);
+  const activePart = S.dayModalFilters.body_part;
+  const activeEquip = S.dayModalFilters.equipment;
+  const hasFilter = activePart || activeEquip;
+
+  // Body-part chip row
+  const partChips = ['',...S.meta.parts].map(p => {
+    const c = p ? grp(p) : {color:'#9A9AA0',soft:'rgba(154,154,160,.1)'};
+    const sel = activePart === p;
+    const label = p ? tPart(p) : 'Todos';
+    return `<button onclick="applyDayFilter('body_part','${p}')" style="flex:none;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid ${sel?c.color:'rgba(255,255,255,.1)'};background:${sel?c.soft:'transparent'};color:${sel?c.color:'#9A9AA0'};font:700 12px Manrope;cursor:pointer;white-space:nowrap;transition:all .13s;" onmouseover="this.style.borderColor='${c.color}';this.style.color='${c.color}'" onmouseout="this.style.borderColor='${sel?c.color:'rgba(255,255,255,.1)'}';this.style.color='${sel?c.color:'#9A9AA0'}'">
+      ${sel?`<span style="width:5px;height:5px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>`:''}${label}</button>`;
+  }).join('');
+
+  // Equipment dropdown
+  const equipOpts = S.meta.equip.map(e=>`<button onclick="applyDayFilter('equipment','${e}')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:9px 12px;border:none;border-radius:8px;background:transparent;color:${activeEquip===e?'#fff':'#C4C4C8'};font:600 13.5px Manrope;text-align:left;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">${tEquip(e)}${activeEquip===e?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>`:''}</button>`).join('');
+
+  const items = S.dayModalExs.map(ex => {
+    const c = grp(ex.body_part);
+    const on = curExs.some(e=>e.exercise.id===ex.id);
+    return `
+      <button onclick="toggleDayEx('${ex.id}')" style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid ${on?'color-mix(in srgb,var(--accent) 30%,transparent)':'rgba(255,255,255,.07)'};border-radius:12px;background:${on?'rgba(240,83,28,.07)':'rgba(255,255,255,.02)'};cursor:pointer;text-align:left;transition:all .14s;width:100%;" onmouseover="this.style.borderColor='rgba(255,255,255,.16)'" onmouseout="this.style.borderColor='${on?'color-mix(in srgb,var(--accent) 30%,transparent)':'rgba(255,255,255,.07)'}'">
+        <span style="flex:none;width:36px;height:36px;border-radius:9px;background:${c.soft};display:flex;align-items:center;justify-content:center;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${c.color};"></span>
+        </span>
+        <span style="flex:1;min-width:0;">
+          <span style="display:block;font:600 14px Manrope;color:#ECECEE;text-transform:capitalize;line-height:1.3;">${ex.name}</span>
+          <span style="display:block;margin-top:3px;color:${c.color};font-size:11.5px;font-weight:700;">${tPart(ex.body_part)||''}<span style="color:#8E8E94;font-weight:600;">${ex.equipment?' · '+tEquip(ex.equipment):''}</span></span>
+        </span>
+        <span style="flex:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${on?'var(--accent)':'transparent'};border:1.5px solid ${on?'var(--accent)':'rgba(255,255,255,.2)'};color:${on?'#fff':'#8A8A90'};">
+          ${on?`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>`:
+               `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>`}
+        </span>
+      </button>`;
+  }).join('');
+
+  g('m-day').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;">
+      <div>
+        <p style="margin:0;font:800 17px Manrope;color:#F4F4F6;">Adicionar a ${day?.label||''}</p>
+        <p style="margin:3px 0 0;color:#8E8E94;font-size:13px;">Toque para incluir ou remover do dia.</p>
+      </div>
+      <button onclick="closeAll()" style="flex:none;width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:none;color:#B0B0B6;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.color='#B0B0B6'">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="position:relative;flex:1;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A7A80" stroke-width="2" stroke-linecap="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4-4"></path></svg>
+          <input type="text" value="${S.dayModalSearch}" oninput="onDaySearch(this.value)" placeholder="Buscar exercício..." style="width:100%;height:40px;padding:0 12px 0 36px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F3F3F4;font:500 14px Manrope;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='rgba(255,255,255,.09)'">
+        </div>
+        <div style="position:relative;flex-shrink:0;">
+          <button onclick="toggleDayEquipFilter(event)" style="display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:10px;border:1px solid ${activeEquip?'color-mix(in srgb,var(--accent) 40%,transparent)':'rgba(255,255,255,.09)'};background:${activeEquip?'var(--accent-soft)':'rgba(255,255,255,.04)'};color:${activeEquip?'var(--accent-strong)':'#9A9AA0'};font:600 13px Manrope;cursor:pointer;white-space:nowrap;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>
+            ${activeEquip ? tEquip(activeEquip) : 'Equip.'}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          ${S.dayModalOpenFilter?`
+            <div id="day-equip-drop" style="position:absolute;top:calc(100% + 6px);right:0;z-index:10;min-width:200px;max-height:240px;overflow-y:auto;padding:6px;background:#1a1a1c;border:1px solid rgba(255,255,255,.12);border-radius:13px;box-shadow:0 20px 50px -16px rgba(0,0,0,.9);">
+              <button onclick="applyDayFilter('equipment','')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:9px 12px;border:none;border-radius:8px;background:transparent;color:${!activeEquip?'#fff':'#C4C4C8'};font:600 13.5px Manrope;text-align:left;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">Todos${!activeEquip?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>`:''}</button>
+              ${equipOpts}
+            </div>`:``}
+        </div>
+      </div>
+      <div style="overflow-x:auto;display:flex;align-items:center;gap:6px;padding-bottom:2px;">
+        ${partChips}
+      </div>
+      ${hasFilter?`
+        <button onclick="clearDayFilters()" style="align-self:flex-start;display:flex;align-items:center;gap:5px;background:none;border:none;color:#9A9AA0;font:600 12px Manrope;cursor:pointer;padding:0;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#9A9AA0'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          Limpar filtros
+        </button>`:''}
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;">
+      ${items||`<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px 20px;text-align:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3A3A40" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4-4"></path></svg><p style="margin:0;color:#8E8E94;font-size:14px;">Nenhum exercício encontrado</p></div>`}
+    </div>
+
+    ${totalPages>1?`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;">
+        <button onclick="goDayPage(${S.dayModalPage-1})" style="height:34px;padding:0 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:transparent;color:#9A9AA0;font:600 13px Manrope;cursor:pointer;${S.dayModalPage<=1?'opacity:.35':''}" ${S.dayModalPage<=1?'disabled':''}>← Anterior</button>
+        <span style="color:#8E8E94;font-size:13px;">${S.dayModalPage} / ${totalPages}</span>
+        <button onclick="goDayPage(${S.dayModalPage+1})" style="height:34px;padding:0 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:transparent;color:#9A9AA0;font:600 13px Manrope;cursor:pointer;${S.dayModalPage>=totalPages?'opacity:.35':''}" ${S.dayModalPage>=totalPages?'disabled':''}>Próxima →</button>
+      </div>`:''}
+
+    <div style="padding:12px 14px 14px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;">
+      <button onclick="finishDayModal()" style="width:100%;height:46px;border:none;border-radius:12px;cursor:pointer;color:#fff;font:700 15px Manrope;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));" onmouseover="this.style.filter='brightness(1.06)'" onmouseout="this.style.filter=''">Concluir</button>
+    </div>`;
+}
+
+let _daySearchTimer;
+function onDaySearch(v) {
+  S.dayModalSearch = v; S.dayModalOpenFilter = false;
+  clearTimeout(_daySearchTimer);
+  _daySearchTimer = setTimeout(async () => { await loadDayModalExs(1); renderDayModal(); }, 350);
+}
+async function applyDayFilter(key, value) {
+  S.dayModalFilters[key] = value; S.dayModalOpenFilter = false;
+  await loadDayModalExs(1); renderDayModal();
+}
+async function clearDayFilters() {
+  S.dayModalFilters = {body_part:'', equipment:''}; S.dayModalOpenFilter = false;
+  await loadDayModalExs(1); renderDayModal();
+}
+function toggleDayEquipFilter(e) {
+  e.stopPropagation(); S.dayModalOpenFilter = !S.dayModalOpenFilter; renderDayModal();
+}
+async function goDayPage(p) { S.dayModalOpenFilter=false; await loadDayModalExs(p); renderDayModal(); }
+
+async function toggleDayEx(exId) {
+  await ensurePlan();
+  const curExs = dayExercises(S.dayModalDay);
+  const entry = curExs.find(e=>e.exercise.id===exId);
+  try {
+    if (entry) {
+      await api(`/plans/${S.plan.id}/schedule/${entry.entry_id}`, {method:'DELETE'});
+    } else {
+      if (S.restDays[S.dayModalDay]) { S.restDays[S.dayModalDay]=false; localStorage.setItem('fit_rest',JSON.stringify(S.restDays)); }
+      await api(`/plans/${S.plan.id}/schedule`, {method:'POST', body:JSON.stringify({day_of_week:S.dayModalDay,exercise_id:exId,sets:3,reps:10,rest_seconds:60})});
+    }
+    await reloadPlan(); renderDayModal(); renderHeader();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════════════════════════
+
+let _settingNameDraft = null;
+let _settingPwCurDraft = '';
+let _settingPwNewDraft = '';
+let _settingShowAtual = false;
+let _settingShowNova = false;
+let _settingsProfileSaved = false;
+let _settingsPwSaved = false;
+let _physWeightDraft = null;
+let _physHeightDraft = null;
+let _physAgeDraft = null;
+let _physSexDraft = null;
+let _physSaved = false;
+let _physSavedT;
+let _regSex = '';
+
+function renderSettingsView() {
+  const cur = S.settings.lang;
+  const LANG_SHORT = {pt:'PT',en:'EN',es:'ES',it:'IT',tr:'TR'};
+  const langShort = LANG_SHORT[cur] || cur.toUpperCase();
+
+  let planExCount = 0;
+  if (S.plan && S.plan.days) S.plan.days.forEach(d => { planExCount += (d.exercises||[]).length; });
+
+  const initial = (S.user.name||'?')[0].toUpperCase();
+  const displayName = _settingNameDraft !== null ? _settingNameDraft : (S.user.name||'');
+  const email = S.user.email || '';
+
+  const langChips = LANG_OPTIONS.map(l => {
+    const a = cur === l.code;
+    return `<button onclick="setLang('${l.code}')" style="height:42px;padding:0 18px;border-radius:11px;cursor:pointer;font:700 14px Manrope;background:${a?'var(--accent-soft)':'transparent'};color:${a?'var(--accent-strong)':'#B6B6BC'};border:1px solid ${a?'color-mix(in srgb,var(--accent) 38%,transparent)':'rgba(255,255,255,.1)'};transition:all .15s;">${l.label}</button>`;
+  }).join('');
+
+  const physWeight = _physWeightDraft !== null ? _physWeightDraft : (S.user.weight_kg ?? '');
+  const physHeight = _physHeightDraft !== null ? _physHeightDraft : (S.user.height_cm ?? '');
+  const physAge    = _physAgeDraft    !== null ? _physAgeDraft    : (S.user.age       ?? '');
+  const physSex    = _physSexDraft    !== null ? _physSexDraft    : (S.user.sex        || '');
+  const sexOpts = [{v:'m',l:'Masculino'},{v:'f',l:'Feminino'},{v:'o',l:'Outro'}];
+  const sexChips = sexOpts.map(({v,l}) => {
+    const sel = physSex === v;
+    return `<button type="button" onclick="setPhysSex('${v}')" style="flex:1;height:46px;border-radius:11px;border:1px solid ${sel?'var(--accent)':'rgba(255,255,255,.09)'};background:${sel?'var(--accent-soft)':'rgba(255,255,255,.04)'};color:${sel?'var(--accent-strong)':'#D4D4D8'};font:600 13px Manrope;cursor:pointer;transition:all .15s;">${l}</button>`;
+  }).join('');
+  const physBtnBg = _physSaved ? 'linear-gradient(180deg,#22C55E,#16A34A)' : 'linear-gradient(180deg,var(--accent-strong),var(--accent-deep))';
+  const physBtnShadow = _physSaved ? '0 12px 30px -12px rgba(34,197,94,.6)' : '0 12px 30px -12px color-mix(in srgb,var(--accent) 65%,transparent)';
+  const physBtnContent = _physSaved
+    ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Salvo`
+    : `Salvar dados físicos`;
+
+  const profileBtnBg = _settingsProfileSaved ? 'linear-gradient(180deg,#22C55E,#16A34A)' : 'linear-gradient(180deg,var(--accent-strong),var(--accent-deep))';
+  const profileBtnShadow = _settingsProfileSaved ? '0 12px 30px -12px rgba(34,197,94,.6)' : '0 12px 30px -12px color-mix(in srgb,var(--accent) 65%,transparent)';
+  const profileBtnContent = _settingsProfileSaved
+    ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Salvo`
+    : `Salvar alterações`;
+
+  const pwBtnBg = _settingsPwSaved ? 'linear-gradient(180deg,#22C55E,#16A34A)' : 'linear-gradient(180deg,var(--accent-strong),var(--accent-deep))';
+  const pwBtnShadow = _settingsPwSaved ? '0 12px 30px -12px rgba(34,197,94,.6)' : '0 12px 30px -12px color-mix(in srgb,var(--accent) 65%,transparent)';
+  const pwBtnContent = _settingsPwSaved
+    ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Senha alterada`
+    : `Alterar senha`;
+
+  const eyeOpen = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+  const eyeOff = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"></path></svg>`;
+
+  g('main').innerHTML = `
+  <div style="max-width:1080px;margin:0 auto;padding:clamp(22px,3vw,36px) 0 72px;">
+    <div style="margin-bottom:26px;">
+      <h1 style="margin:0;font:800 clamp(24px,3vw,30px) Manrope;letter-spacing:-.02em;color:#F7F7F6;">Configurações</h1>
+      <p style="margin:6px 0 0;color:#8E8E94;font-size:14.5px;">Gerencie seu perfil, idioma e segurança.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;">
+
+      <aside style="flex:1 1 280px;max-width:340px;background:linear-gradient(180deg,#161618,#101012);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px 24px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:220px;height:140px;background:var(--accent);filter:blur(80px);opacity:.16;pointer-events:none;"></div>
+        <div style="position:relative;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--accent-strong),var(--accent-deep));color:#fff;font-weight:800;font-size:34px;box-shadow:0 12px 30px -10px color-mix(in srgb,var(--accent) 70%,transparent);">${initial}</span>
+          <h2 style="margin:16px 0 0;font:800 20px Manrope;color:#F7F7F6;">${S.user.name}</h2>
+          <p style="margin:4px 0 0;color:#9A9AA0;font-size:14px;">${email}</p>
+          <span style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#C4C4C8;font-size:12.5px;font-weight:700;white-space:nowrap;"><span style="width:6px;height:6px;border-radius:50%;background:#22C55E;"></span>Conta ativa</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:24px;padding-top:22px;border-top:1px solid rgba(255,255,255,.07);">
+          <div style="flex:1;"><div style="font:800 22px Manrope;color:#F2F2F4;">${planExCount}</div><div style="color:#7C7C82;font-size:11.5px;font-weight:600;margin-top:2px;">no plano</div></div>
+          <div style="width:1px;background:rgba(255,255,255,.08);"></div>
+          <div style="flex:1;"><div style="font:800 22px Manrope;color:#F2F2F4;">${langShort}</div><div style="color:#7C7C82;font-size:11.5px;font-weight:600;margin-top:2px;">idioma</div></div>
+        </div>
+      </aside>
+
+      <div style="flex:999 1 460px;display:flex;flex-direction:column;gap:18px;">
+
+        <section style="background:#121214;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px clamp(18px,2.5vw,26px);">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+            <span style="flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg></span>
+            <div><h3 style="margin:0;font:800 16px Manrope;color:#F2F2F4;">Idioma das instruções</h3><p style="margin:2px 0 0;color:#8A8A90;font-size:13px;">Em qual idioma exibir os passos dos exercícios.</p></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">${langChips}</div>
+        </section>
+
+        <section style="background:#121214;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px clamp(18px,2.5vw,26px);">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+            <span style="flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"></path></svg></span>
+            <div><h3 style="margin:0;font:800 16px Manrope;color:#F2F2F4;">Perfil</h3><p style="margin:2px 0 0;color:#8A8A90;font-size:13px;">Suas informações de conta.</p></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Nome</label>
+              <input id="cfg-name" type="text" value="${displayName.replace(/"/g,'&quot;')}" oninput="_settingNameDraft=this.value" placeholder="Seu nome" style="width:100%;height:50px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F5F5F4;font:500 15px Manrope;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Email</label>
+              <div style="display:flex;align-items:center;gap:10px;height:50px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);color:#9A9AA0;font:500 15px Manrope;"><span style="flex:1;">${email}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A6A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button onclick="saveProfile()" style="display:flex;align-items:center;gap:8px;height:48px;padding:0 22px;border:none;border-radius:12px;cursor:pointer;color:#fff;font:700 14.5px Manrope;background:${profileBtnBg};box-shadow:${profileBtnShadow};transition:all .18s;">${profileBtnContent}</button>
+            </div>
+          </div>
+        </section>
+
+        <section style="background:#121214;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px clamp(18px,2.5vw,26px);">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+            <span style="flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></span>
+            <div><h3 style="margin:0;font:800 16px Manrope;color:#F2F2F4;">Dados físicos</h3><p style="margin:2px 0 0;color:#8A8A90;font-size:13px;">Usados para calcular calorias e personalizar treinos.</p></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Peso (kg)</label>
+                <input id="cfg-weight" type="number" value="${physWeight}" oninput="_physWeightDraft=this.value" placeholder="75" min="30" max="400" step="0.1" style="width:100%;height:50px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F5F5F4;font:500 15px Manrope;outline:none;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Altura (cm)</label>
+                <input id="cfg-height" type="number" value="${physHeight}" oninput="_physHeightDraft=this.value" placeholder="175" min="50" max="280" style="width:100%;height:50px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F5F5F4;font:500 15px Manrope;outline:none;box-sizing:border-box;">
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Idade</label>
+              <input id="cfg-age" type="number" value="${physAge}" oninput="_physAgeDraft=this.value" placeholder="25" min="10" max="120" style="width:100%;height:50px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F5F5F4;font:500 15px Manrope;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Sexo</label>
+              <div style="display:flex;gap:8px;">${sexChips}</div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button onclick="savePhysical()" style="display:flex;align-items:center;gap:8px;height:48px;padding:0 22px;border:none;border-radius:12px;cursor:pointer;color:#fff;font:700 14.5px Manrope;background:${physBtnBg};box-shadow:${physBtnShadow};transition:all .18s;">${physBtnContent}</button>
+            </div>
+          </div>
+        </section>
+
+        <section style="background:#121214;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px clamp(18px,2.5vw,26px);">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+            <span style="flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"></path></svg></span>
+            <div><h3 style="margin:0;font:800 16px Manrope;color:#F2F2F4;">Segurança</h3><p style="margin:2px 0 0;color:#8A8A90;font-size:13px;">Altere sua senha de acesso.</p></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Senha atual</label>
+              <div style="position:relative;">
+                <input id="cfg-pw-cur" type="${_settingShowAtual?'text':'password'}" value="${_settingPwCurDraft.replace(/"/g,'&quot;')}" placeholder="••••••••" style="width:100%;height:50px;padding:0 46px 0 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F5F5F4;font:500 15px Manrope;outline:none;box-sizing:border-box;">
+                <button type="button" onclick="_cfgTogglePwAtual()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#7A7A80;cursor:pointer;border-radius:9px;">${_settingShowAtual?eyeOff:eyeOpen}</button>
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font:600 11px Manrope;letter-spacing:.08em;text-transform:uppercase;color:#8A8A90;margin-bottom:9px;">Nova senha</label>
+              <div style="position:relative;">
+                <input id="cfg-pw-new" type="${_settingShowNova?'text':'password'}" value="${_settingPwNewDraft.replace(/"/g,'&quot;')}" placeholder="Mínimo 8 caracteres" style="width:100%;height:50px;padding:0 46px 0 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F5F5F4;font:500 15px Manrope;outline:none;box-sizing:border-box;">
+                <button type="button" onclick="_cfgTogglePwNova()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#7A7A80;cursor:pointer;border-radius:9px;">${_settingShowNova?eyeOff:eyeOpen}</button>
+              </div>
+              <p style="margin:9px 0 0;color:#7C7C82;font-size:12.5px;">Use ao menos 8 caracteres, com letras e números.</p>
+            </div>
+            <div id="cfg-pw-err" style="color:#F87171;font-size:12.5px;min-height:16px;"></div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button onclick="savePassword()" style="display:flex;align-items:center;gap:8px;height:48px;padding:0 22px;border:none;border-radius:12px;cursor:pointer;color:#fff;font:700 14.5px Manrope;background:${pwBtnBg};box-shadow:${pwBtnShadow};transition:all .18s;">${pwBtnContent}</button>
+            </div>
+          </div>
+        </section>
+
+        <section style="background:#121214;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px clamp(18px,2.5vw,26px);">
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+            <span style="flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B0B0B6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg></span>
+            <div><h3 style="margin:0;font:800 16px Manrope;color:#F2F2F4;">Conta</h3><p style="margin:2px 0 0;color:#8A8A90;font-size:13px;">Sessão e dados da conta.</p></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06);">
+            <div><p style="margin:0;color:#E4E4E8;font-size:14.5px;font-weight:700;">Encerrar sessão</p><p style="margin:3px 0 0;color:#8A8A90;font-size:13px;">Você precisará entrar novamente.</p></div>
+            <button onclick="logout()" style="height:44px;padding:0 20px;border:1px solid rgba(255,255,255,.14);border-radius:11px;background:transparent;color:#E4E4E8;font:700 14px Manrope;cursor:pointer;">Sair</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 0 4px;">
+            <div><p style="margin:0;color:#F87171;font-size:14.5px;font-weight:700;">Excluir conta</p><p style="margin:3px 0 0;color:#8A8A90;font-size:13px;">Remove permanentemente seus dados.</p></div>
+            <button style="height:44px;padding:0 20px;border:1px solid rgba(244,63,63,.35);border-radius:11px;background:rgba(244,63,63,.08);color:#F87171;font:700 14px Manrope;cursor:pointer;">Excluir</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>`;
+}
+
+function _cfgTogglePwAtual() {
+  _settingPwCurDraft = g('cfg-pw-cur')?.value || '';
+  _settingPwNewDraft = g('cfg-pw-new')?.value || '';
+  _settingShowAtual = !_settingShowAtual;
+  renderSettingsView();
+}
+function _cfgTogglePwNova() {
+  _settingPwCurDraft = g('cfg-pw-cur')?.value || '';
+  _settingPwNewDraft = g('cfg-pw-new')?.value || '';
+  _settingShowNova = !_settingShowNova;
+  renderSettingsView();
+}
+
+function setLang(code) { S.settings.lang=code; localStorage.setItem('fit_settings',JSON.stringify(S.settings)); renderSettingsView(); }
+
+async function saveProfile() {
+  const name = (g('cfg-name')?.value || '').trim(); if(!name) return;
+  try {
+    const d = await api('/me',{method:'PUT',body:JSON.stringify({name})});
+    S.user.name = d.name; localStorage.setItem('fit_usr',JSON.stringify(S.user));
+    _settingNameDraft = null;
+    _settingsProfileSaved = true; renderHeader(); renderSettingsView();
+    clearTimeout(_settingsProfileSavedT);
+    _settingsProfileSavedT = setTimeout(()=>{ _settingsProfileSaved=false; renderSettingsView(); }, 1800);
+  } catch(e) { toast(e.message,'err'); }
+}
+let _settingsProfileSavedT;
+
+function setPhysSex(v) {
+  _physSexDraft = (_physSexDraft === v) ? '' : v;
+  renderSettingsView();
+}
+
+async function savePhysical() {
+  const body = {};
+  const w = parseFloat(g('cfg-weight')?.value); if (!isNaN(w) && w > 0) body.weight_kg = w;
+  const h = parseFloat(g('cfg-height')?.value); if (!isNaN(h) && h > 0) body.height_cm = h;
+  const a = parseInt(g('cfg-age')?.value);       if (!isNaN(a) && a > 0) body.age = a;
+  if (_physSexDraft !== null) body.sex = _physSexDraft;
+  if (!Object.keys(body).length) return;
+  try {
+    const d = await api('/me', {method:'PUT', body:JSON.stringify(body)});
+    Object.assign(S.user, d);
+    localStorage.setItem('fit_usr', JSON.stringify(S.user));
+    _physWeightDraft = null; _physHeightDraft = null; _physAgeDraft = null; _physSexDraft = null;
+    _physSaved = true; renderSettingsView();
+    clearTimeout(_physSavedT);
+    _physSavedT = setTimeout(() => { _physSaved = false; renderSettingsView(); }, 1800);
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function savePassword() {
+  const cur = g('cfg-pw-cur')?.value, nw = g('cfg-pw-new')?.value;
+  const errEl = g('cfg-pw-err');
+  if(!cur||!nw){if(errEl)errEl.textContent='Preencha os dois campos';return;}
+  if(nw.length<8){if(errEl)errEl.textContent='Mínimo 8 caracteres';return;}
+  try {
+    await api('/me',{method:'PUT',body:JSON.stringify({current_password:cur,new_password:nw})});
+    _settingPwCurDraft=''; _settingPwNewDraft='';
+    _settingsPwSaved=true; renderSettingsView();
+    clearTimeout(_settingsPwSavedT);
+    _settingsPwSavedT = setTimeout(()=>{ _settingsPwSaved=false; renderSettingsView(); }, 1800);
+  } catch(e) { if(errEl) errEl.textContent=e.message; }
+}
+let _settingsPwSavedT;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WORKOUT VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+
+const WS = {
+  day: 1, sets: {}, reps: {}, weights: {}, rest: 60,
+  started: false, mode: 'idle', running: false,
+  curIdx: 0, curSet: 1, elapsed: 0, restLeft: 0, sessionSecs: 0, done: {}, _insights: {}
+};
+let _wsTid = null;
+
+function wsExsForDay(dayKey) {
+  return S.plan?.schedule.find(d => d.day_of_week === dayKey)?.exercises || [];
+}
+function wsGetSets(exId)    { return WS.sets[exId]    ?? 3; }
+function wsGetReps(exId)    { return WS.reps[exId]    ?? 10; }
+function wsGetWeight(exId)  { return WS.weights[exId] ?? 0; }
+function wsFmt(s) { const m = Math.floor(s/60); return m + ':' + String(s%60).padStart(2,'0'); }
+
+function startWsTick() {
+  if (_wsTid) return;
+  _wsTid = setInterval(() => {
+    if (!WS.started || WS.mode === 'done' || !WS.running) return;
+    WS.sessionSecs++;
+    if (WS.mode === 'work') {
+      WS.elapsed++;
+    } else if (WS.mode === 'rest') {
+      WS.restLeft = Math.max(0, WS.restLeft - 1);
+      if (WS.restLeft === 0) { wsAdvanceSet(); }
+    }
+    if (S.view === 'workout') renderWorkoutView();
+  }, 1000);
+}
+function stopWsTick() { clearInterval(_wsTid); _wsTid = null; }
+
+function wsLoadPrefs() {
+  const p = JSON.parse(localStorage.getItem('fit_ws_prefs') || '{}');
+  if (p.sets)     WS.sets    = p.sets;
+  if (p.reps)     WS.reps    = p.reps;
+  if (p.weights)  WS.weights = p.weights;
+  if (p.rest)     WS.rest    = p.rest;
+}
+function wsSavePrefs() {
+  localStorage.setItem('fit_ws_prefs', JSON.stringify({sets: WS.sets, reps: WS.reps, weights: WS.weights, rest: WS.rest}));
+}
+
+function wsInitDay() {
+  wsLoadPrefs();
+  if (WS.started) return;
+  const today = new Date().getDay();
+  if (wsExsForDay(today).length > 0) { WS.day = today; return; }
+  const order = [1,2,3,4,5,6,0];
+  const first = order.find(d => wsExsForDay(d).length > 0);
+  WS.day = first !== undefined ? first : today;
+}
+
+async function _preloadDayInsights(exEntries) {
+  for (const entry of exEntries) {
+    const exId = entry.exercise?.id;
+    if (!exId || WS._insights[exId]) continue;
+    try { WS._insights[exId] = await api(`/exercises/${exId}/insights`); } catch(e) {}
+  }
+}
+
+function wsAdvanceSet() {
+  const exs = wsExsForDay(WS.day);
+  const curId = exs[WS.curIdx]?.exercise.id;
+  if (WS.curSet < wsGetSets(curId)) {
+    WS.mode = 'work'; WS.elapsed = 0; WS.curSet++; WS.running = true;
+  } else if (WS.curIdx < exs.length - 1) {
+    WS.mode = 'work'; WS.elapsed = 0; WS.curIdx++; WS.curSet = 1; WS.running = true;
+  } else {
+    WS.mode = 'done'; WS.running = false;
+  }
+}
+
+function wsCompleteSet() {
+  const exs = wsExsForDay(WS.day);
+  const curEntry = exs[WS.curIdx];
+  const curId = curEntry?.exercise.id;
+  WS.done[curId + '-' + WS.curSet] = true;
+  // auto-log weight if set
+  const w = wsGetWeight(curId);
+  if (w > 0) {
+    const log = JSON.parse(localStorage.getItem('fit_weight_log') || '[]');
+    log.push({ date: new Date().toISOString().slice(0,10), exId: curId, exName: curEntry.exercise.name, set: WS.curSet, weight: w, reps: wsGetReps(curId) });
+    localStorage.setItem('fit_weight_log', JSON.stringify(log));
+  }
+  const isLastSet = WS.curSet >= wsGetSets(curId);
+  const isLastEx = WS.curIdx >= exs.length - 1;
+  if (isLastSet && isLastEx) { WS.mode = 'done'; WS.running = false; }
+  else { WS.mode = 'rest'; WS.restLeft = WS.rest; WS.running = true; }
+  renderWorkoutView();
+}
+
+function wsStartWorkout() {
+  WS.started = true; WS.mode = 'work'; WS.running = true;
+  WS.curIdx = 0; WS.curSet = 1; WS.elapsed = 0; WS.sessionSecs = 0; WS.done = {}; WS._startTs = Date.now();
+  _preloadDayInsights(wsExsForDay(WS.day));
+  renderWorkoutView();
+}
+
+function wsSaveSession() {
+  if (Object.keys(WS.done).length === 0) return;
+  const exs = wsExsForDay(WS.day);
+  const dayInfo = WEEK.find(d => d.key === WS.day);
+
+  const mets = exs.map(e => WS._insights[e.exercise?.id]?.calories_per_min_met || 3.5);
+  const avgMet = mets.reduce((a, b) => a + b, 0) / (mets.length || 1);
+  const weightKg = S.user?.weight_kg || 70;
+  const totalSetsDone = Object.keys(WS.done).length;
+
+  let volumeKg = 0;
+  Object.entries(WS.weights).forEach(([exId, kg]) => {
+    if (kg > 0) {
+      const setsDone = Object.keys(WS.done).filter(k => k.startsWith(exId + '-')).length;
+      volumeKg += kg * setsDone * (WS.reps[exId] ?? 10);
+    }
+  });
+
+  const effectiveSecs = Math.max(WS.sessionSecs, totalSetsDone * 60);
+  const aerobic = avgMet * weightKg * 3.5 / 200 * (effectiveSecs / 60);
+  const calories = Math.round(aerobic + volumeKg / 60);
+
+  const bodyParts = [...new Set(exs.map(e => e.exercise?.body_part).filter(Boolean))];
+
+  const session = {
+    id: WS._startTs || Date.now(),
+    date: new Date().toISOString().slice(0,10),
+    dayOfWeek: WS.day,
+    dayLabel: dayInfo?.label || '',
+    durationSecs: WS.sessionSecs,
+    exerciseCount: exs.length,
+    setsDone: Object.keys(WS.done).length,
+    calories,
+    volumeKg: Math.round(volumeKg),
+    bodyParts,
+  };
+  const sessions = safeLS('fit_sessions');
+  if (!sessions.find(s => s.id === session.id)) {
+    sessions.unshift(session);
+    if (sessions.length > 100) sessions.splice(100);
+    localStorage.setItem('fit_sessions', JSON.stringify(sessions));
+  }
+}
+
+function wsEndWorkout() {
+  wsSaveSession();
+  WS.started = false; WS.mode = 'idle'; WS.running = false;
+  WS.done = {}; WS.sessionSecs = 0; WS.elapsed = 0; WS._startTs = null;
+  stopWsTick();
+  renderWorkoutView();
+}
+
+function wsSetDay(dayKey) { if (!WS.started) { WS.day = dayKey; renderWorkoutView(); } }
+function wsSetRest(v) { WS.rest = v; wsSavePrefs(); renderWorkoutView(); }
+function wsIncSets(id) { WS.sets[id] = Math.min((WS.sets[id] ?? 3) + 1, 6); wsSavePrefs(); renderWorkoutView(); }
+function wsDecSets(id) { WS.sets[id] = Math.max((WS.sets[id] ?? 3) - 1, 1); wsSavePrefs(); renderWorkoutView(); }
+function wsIncReps(id) { WS.reps[id] = Math.min((WS.reps[id] ?? 10) + 1, 30); wsSavePrefs(); renderWorkoutView(); }
+function wsDecReps(id) { WS.reps[id] = Math.max((WS.reps[id] ?? 10) - 1, 1); wsSavePrefs(); renderWorkoutView(); }
+function wsIncWeight(id, step) { WS.weights[id] = Math.round(((WS.weights[id] ?? 0) + step) * 4) / 4; wsSavePrefs(); renderWorkoutView(); }
+function wsDecWeight(id, step) { WS.weights[id] = Math.max(0, Math.round(((WS.weights[id] ?? 0) - step) * 4) / 4); wsSavePrefs(); renderWorkoutView(); }
+function wsSetWeight(id, v) { const n = parseFloat(v); WS.weights[id] = isNaN(n) || n < 0 ? 0 : Math.round(n * 4) / 4; wsSavePrefs(); }
+function wsToggleRun() { WS.running = !WS.running; renderWorkoutView(); }
+function wsSkipRest() { wsAdvanceSet(); renderWorkoutView(); }
+function wsAddRest() { WS.restLeft += 15; renderWorkoutView(); }
+
+// ── Streak ────────────────────────────────────────────────────────────────────
+// Counts consecutive plan-days (dayOfWeek) trained this week, Mon→Sun order.
+// Using plan days (not calendar dates) so testing multiple workouts same day works.
+function wsGetStreak() {
+  const sessions = safeLS('fit_sessions');
+  if (!sessions.length) return 0;
+
+  // Current week bounds (Mon 00:00 → Sun 23:59)
+  const now = new Date();
+  const dow = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  const weekSessions = sessions.filter(s => {
+    const d = new Date(s.date + 'T12:00:00');
+    return d >= monday && d <= sunday;
+  });
+  if (!weekSessions.length) return 0;
+
+  // Unique plan days trained this week (Mon=1..Sat=6,Sun=0)
+  const trainedDays = new Set(weekSessions.map(s => s.dayOfWeek));
+
+  // Walk Mon→Sun; find latest trained day, then count consecutive going back
+  const weekOrder = [1, 2, 3, 4, 5, 6, 0];
+  let latestIdx = -1;
+  for (let i = weekOrder.length - 1; i >= 0; i--) {
+    if (trainedDays.has(weekOrder[i])) { latestIdx = i; break; }
+  }
+  if (latestIdx < 0) return 0;
+
+  let streak = 0;
+  for (let i = latestIdx; i >= 0; i--) {
+    if (trainedDays.has(weekOrder[i])) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// ── Weight logging ────────────────────────────────────────────────────────────
+function wsLastWeight(exId) {
+  const log = JSON.parse(localStorage.getItem('fit_weight_log') || '[]');
+  const entries = log.filter(e => String(e.exId) === String(exId));
+  return entries.length ? entries[entries.length - 1].weight : null;
+}
+
+function wsPromptWeight() {
+  const exs = wsExsForDay(WS.day);
+  const curEx = exs[WS.curIdx]?.exercise;
+  if (!curEx) { wsCompleteSet(); return; }
+  const last = wsLastWeight(curEx.id);
+  const modal = g('m-weight');
+  modal.innerHTML = `
+    <p style="margin:0 0 3px;font:800 17px Manrope;color:#F7F7F6;text-transform:capitalize;">${curEx.name}</p>
+    <p style="margin:0 0 20px;color:#9A9AA0;font-size:13px;">Série ${WS.curSet} · ${wsGetReps(curEx.id)} reps</p>
+    <label style="display:block;font:700 11px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Carga (kg)</label>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:22px;">
+      <button onclick="wsWeightAdj(-5)" style="width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#C4C4C8;font:700 12px Manrope;cursor:pointer;">−5</button>
+      <button onclick="wsWeightAdj(-1.25)" style="width:36px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:transparent;color:#8E8E94;font:700 11px Manrope;cursor:pointer;">−1¼</button>
+      <input id="ws-wt-inp" type="number" step="0.5" min="0" max="999" placeholder="kg" value="${last !== null ? last : ''}"
+        style="flex:1;height:52px;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:#1A1A1C;color:#F7F7F6;font:800 24px Manrope;text-align:center;outline:none;-moz-appearance:textfield;">
+      <button onclick="wsWeightAdj(1.25)" style="width:36px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:transparent;color:#8E8E94;font:700 11px Manrope;cursor:pointer;">+1¼</button>
+      <button onclick="wsWeightAdj(5)" style="width:42px;height:42px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft);color:var(--accent-strong);font:700 12px Manrope;cursor:pointer;">+5</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="wsSkipWeight()" style="flex:1;height:48px;border-radius:13px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#9A9AA0;font:700 14px Manrope;cursor:pointer;">Pular</button>
+      <button onclick="wsConfirmWeight()" style="flex:1.6;height:48px;border-radius:13px;border:none;color:#fff;font:800 14.5px Manrope;cursor:pointer;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));display:flex;align-items:center;justify-content:center;gap:7px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Confirmar</button>
+    </div>`;
+  g('overlay').classList.remove('hidden');
+  modal.classList.remove('hidden');
+}
+
+function wsWeightAdj(delta) {
+  const inp = g('ws-wt-inp');
+  if (!inp) return;
+  inp.value = Math.max(0, Math.round((parseFloat(inp.value) || 0) * 4 + delta * 4) / 4);
+}
+
+function wsConfirmWeight() {
+  const inp = g('ws-wt-inp');
+  const weight = parseFloat(inp?.value);
+  if (weight > 0) {
+    const exs = wsExsForDay(WS.day);
+    const curEx = exs[WS.curIdx]?.exercise;
+    if (curEx) {
+      const log = JSON.parse(localStorage.getItem('fit_weight_log') || '[]');
+      log.push({ date: new Date().toISOString().slice(0,10), exId: curEx.id, exName: curEx.name, set: WS.curSet, weight, reps: wsGetReps(curEx.id) });
+      localStorage.setItem('fit_weight_log', JSON.stringify(log));
+    }
+  }
+  closeAll();
+  wsCompleteSet();
+}
+
+function wsSkipWeight() { closeAll(); wsCompleteSet(); }
+
+// ── Progression chart ─────────────────────────────────────────────────────────
+function wsProgressionChart(exId) {
+  const log = safeLS('fit_weight_log');
+  const entries = log.filter(e => String(e.exId) === String(exId));
+  if (!entries.length) return '';
+  const byDate = {};
+  entries.forEach(e => { if (!byDate[e.date] || e.weight > byDate[e.date]) byDate[e.date] = e.weight; });
+  const pts = Object.entries(byDate).sort((a,b) => a[0].localeCompare(b[0])).slice(-10);
+  if (pts.length < 2) {
+    const onlyW = pts[0]?.[1] ?? entries[entries.length-1].weight;
+    return `<div style="margin-top:11px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font:700 11px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.04em;">Última carga</span>
+      <span style="font:800 14px Manrope;color:var(--accent-strong);">${onlyW} kg</span>
+    </div>`;
+  }
+  const weights = pts.map(p => p[1]);
+  const minW = Math.min(...weights), maxW = Math.max(...weights);
+  const range = maxW - minW || 1;
+  const W = 260, H = 52, pad = 6;
+  const xs = pts.map((_, i) => pad + (i / (pts.length - 1)) * (W - pad * 2));
+  const ys = weights.map(w => H - pad - ((w - minW) / range) * (H - pad * 2));
+  const poly = xs.map((x,i) => `${x},${ys[i]}`).join(' ');
+  const area = `${xs[0]},${H} ` + xs.map((x,i) => `${x},${ys[i]}`).join(' ') + ` ${xs[xs.length-1]},${H}`;
+  const dotId = `wc${exId}`;
+  const dots = xs.map((x,i) => `<circle cx="${x}" cy="${ys[i]}" r="2.8" fill="var(--accent)"><title>${weights[i]}kg</title></circle>`).join('');
+  return `<div style="margin-top:11px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font:700 11px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.04em;">Evolução</span>
+      <span style="font:800 12px Manrope;color:var(--accent-strong);">${maxW} kg máx</span>
+    </div>
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;overflow:visible;">
+      <defs><linearGradient id="${dotId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".22"></stop>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"></stop>
+      </linearGradient></defs>
+      <polygon points="${area}" fill="url(#${dotId})"></polygon>
+      <polyline points="${poly}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      ${dots}
+    </svg>
+  </div>`;
+}
+
+function renderWorkoutView() {
+  if (!WS.started || WS.mode === 'idle') renderWorkoutSetup();
+  else if (WS.mode !== 'done') renderWorkoutActive();
+  else renderWorkoutDone();
+}
+
+function renderWorkoutSetup() {
+  const exs = wsExsForDay(WS.day);
+  const hasEx = exs.length > 0;
+  const totalSets = exs.reduce((a, e) => a + wsGetSets(e.exercise.id), 0);
+  const estMin = Math.max(1, Math.round(totalSets * (45 + WS.rest) / 60));
+
+  const dayTabs = WEEK.map(d => {
+    const active = WS.day === d.key;
+    const hasDayEx = wsExsForDay(d.key).length > 0;
+    return `<button onclick="wsSetDay(${d.key})" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:62px;padding:10px 6px;border-radius:13px;cursor:pointer;background:${active?'var(--accent-soft)':'rgba(255,255,255,.04)'};border:1px solid ${active?'color-mix(in srgb,var(--accent) 40%,transparent)':'rgba(255,255,255,.08)'};transition:all .15s;">
+      <span style="font:800 13px Manrope;color:${active?'var(--accent-strong)':'#C4C4C8'};">${d.label.slice(0,3)}</span>
+      <span style="width:6px;height:6px;border-radius:50%;background:${hasDayEx?'var(--accent)':'rgba(255,255,255,.18)'};"></span>
+    </button>`;
+  }).join('');
+
+  const restOpts = [30,45,60,90].map(v => {
+    const a = WS.rest === v;
+    return `<button onclick="wsSetRest(${v})" style="height:36px;padding:0 14px;border-radius:9px;cursor:pointer;font:700 13px Manrope;background:${a?'var(--accent-soft)':'transparent'};color:${a?'var(--accent-strong)':'#B6B6BC'};border:1px solid ${a?'color-mix(in srgb,var(--accent) 38%,transparent)':'rgba(255,255,255,.1)'};transition:all .14s;">${v}s</button>`;
+  }).join('');
+
+  const exList = exs.map((entry, i) => {
+    const ex = entry.exercise;
+    const c = grp(ex.body_part);
+    const sets   = wsGetSets(ex.id);
+    const reps   = wsGetReps(ex.id);
+    const weight = wsGetWeight(ex.id);
+    const wLabel = weight > 0 ? `${weight} kg` : '— kg';
+    return `<div style="padding:16px;border-radius:16px;background:#121214;border:1px solid rgba(255,255,255,.07);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <span style="flex:none;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:${c.soft};color:${c.color};font:800 14px Manrope;">${i+1}</span>
+        <div style="flex:1;min-width:0;">
+          <p style="margin:0;font:700 15px Manrope;color:#ECECEE;text-transform:capitalize;line-height:1.3;">${ex.name}</p>
+          <span style="display:inline-flex;align-items:center;gap:5px;margin-top:5px;color:${c.color};font-size:12px;font-weight:700;"><span style="width:5px;height:5px;border-radius:50%;background:${c.color};"></span>${tPart(ex.body_part)}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1 1 130px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);">
+          <span style="color:#9A9AA0;font:700 12px Manrope;text-transform:uppercase;letter-spacing:.05em;">Séries</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="wsDecSets('${ex.id}')" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#D4D4D8;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+            <span style="min-width:18px;text-align:center;font:800 17px Manrope;color:#F2F2F4;">${sets}</span>
+            <button onclick="wsIncSets('${ex.id}')" style="width:28px;height:28px;border-radius:8px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft);color:var(--accent-strong);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+        </div>
+        <div style="flex:1 1 130px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);">
+          <span style="color:#9A9AA0;font:700 12px Manrope;text-transform:uppercase;letter-spacing:.05em;">Reps</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="wsDecReps('${ex.id}')" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#D4D4D8;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+            <span style="min-width:22px;text-align:center;font:800 17px Manrope;color:#F2F2F4;">${reps}</span>
+            <button onclick="wsIncReps('${ex.id}')" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#D4D4D8;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+        </div>
+        <div style="flex:1 1 100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);">
+          <span style="color:#9A9AA0;font:700 12px Manrope;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">Carga</span>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <button onclick="wsDecWeight('${ex.id}',5)" style="height:30px;padding:0 9px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#C4C4C8;font:600 11px Manrope;cursor:pointer;">−5</button>
+            <button onclick="wsDecWeight('${ex.id}',2.5)" style="height:30px;padding:0 8px;border-radius:8px;border:1px solid rgba(255,255,255,.07);background:transparent;color:#7A7A80;font:600 10px Manrope;cursor:pointer;">−2.5</button>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" step="0.5" min="0" placeholder="0" value="${weight > 0 ? weight : ''}"
+                oninput="wsSetWeight('${ex.id}', this.value)"
+                style="width:56px;height:32px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:#1C1C1E;color:#F2F2F4;font:800 15px Manrope;text-align:center;outline:none;padding:0;">
+              <span style="color:#7A7A80;font:600 12px Manrope;">kg</span>
+            </div>
+            <button onclick="wsIncWeight('${ex.id}',2.5)" style="height:30px;padding:0 8px;border-radius:8px;border:1px solid rgba(255,255,255,.07);background:transparent;color:#7A7A80;font:600 10px Manrope;cursor:pointer;">+2.5</button>
+            <button onclick="wsIncWeight('${ex.id}',5)" style="height:30px;padding:0 9px;border-radius:8px;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft);color:var(--accent-strong);font:600 11px Manrope;cursor:pointer;">+5</button>
+          </div>
+        </div>
+      </div>
+      ${(()=>{try{return wsProgressionChart(ex.id);}catch(e){console.error('chart',e);return '';}})()}
+    </div>`;
+  }).join('');
+
+  g('main').innerHTML = `
+  <div style="max-width:760px;margin:0 auto;padding:clamp(20px,3vw,32px) 0 72px;">
+    <div style="margin-bottom:20px;">
+      <h1 style="margin:0;font:800 clamp(24px,3vw,30px) Manrope;letter-spacing:-.02em;color:#F7F7F6;">Treinar</h1>
+      <p style="margin:6px 0 0;color:#8E8E94;font-size:14.5px;">Escolha o dia, ajuste as séries e inicie o cronômetro.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;">${dayTabs}</div>
+    ${hasEx ? `<div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 22px Manrope;color:#F2F2F4;">${exs.length}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">exercícios</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 22px Manrope;color:#F2F2F4;">${totalSets}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">séries</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 22px Manrope;color:#F2F2F4;">~${estMin}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">minutos</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);">
+        <span style="display:flex;align-items:center;gap:8px;color:#C4C4C8;font:700 14px Manrope;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2M9 2h6"></path></svg>Descanso entre séries</span>
+        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;">${restOpts}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">${exList}</div>
+      <button onclick="wsStartWorkout()" style="width:100%;height:58px;margin-top:22px;display:flex;align-items:center;justify-content:center;gap:10px;border:none;border-radius:16px;cursor:pointer;color:#fff;font:800 16.5px Manrope;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));box-shadow:0 16px 40px -14px color-mix(in srgb,var(--accent) 70%,transparent);transition:filter .15s;" onmouseover="this.style.filter='brightness(1.06)'" onmouseout="this.style.filter=''">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>Iniciar treino
+      </button>
+    </div>` : `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 20px;text-align:center;border:1px dashed rgba(255,255,255,.1);border-radius:20px;background:rgba(255,255,255,.015);">
+      <span style="width:60px;height:60px;border-radius:17px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8A8A90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+      <div><p style="margin:0;color:#E4E4E8;font-size:16px;font-weight:700;">Dia de descanso</p><p style="margin:7px 0 0;color:#8E8E94;font-size:14px;">Nenhum treino planejado para este dia. Escolha outro dia acima.</p></div>
+    </div>`}
+  ${(()=>{try{return wsGetDashboardHTML();}catch(e){console.error('dashboard',e);return '';}})()}
+  </div>`;
+}
+
+function wsGetDashboardHTML() {
+  const sessions = safeLS('fit_sessions');
+
+  // Week bounds (Mon–Sun)
+  const now = new Date();
+  const dow = now.getDay(); // 0=Sun
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+  monday.setHours(0,0,0,0);
+
+  const todayStr = now.toISOString().slice(0,10);
+  const weekSessions = sessions.filter(s => {
+    const d = new Date(s.date + 'T12:00:00');
+    const mon = new Date(monday); mon.setHours(0,0,0,0);
+    const sun = new Date(monday); sun.setDate(monday.getDate()+6); sun.setHours(23,59,59,999);
+    return d >= mon && d <= sun;
+  });
+
+  const weekWorkouts = weekSessions.length;
+  const weekSets = weekSessions.reduce((a, s) => a + s.setsDone, 0);
+  const weekSecs = weekSessions.reduce((a, s) => a + s.durationSecs, 0);
+  const weekCalories = weekSessions.reduce((a, s) => a + (s.calories || 0), 0);
+
+  const muscleCount = {};
+  weekSessions.forEach(s => (s.bodyParts||[]).forEach(bp => { muscleCount[bp] = (muscleCount[bp]||0)+1; }));
+  const weekMuscles = Object.entries(muscleCount).sort((a,b)=>b[1]-a[1]);
+
+  // Heatmap: Mon(1)→Sun(0)
+  const heatmap = WEEK.map(d => {
+    const offset = d.key === 0 ? 6 : d.key - 1;
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + offset);
+    const dateStr = date.toISOString().slice(0,10);
+    const trained = sessions.some(s => s.date === dateStr);
+    const isToday = dateStr === todayStr;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <span style="font:700 11px Manrope;color:${isToday?'var(--accent-strong)':'#7C7C82'};text-transform:uppercase;letter-spacing:.03em;">${d.label.slice(0,3)}</span>
+      <span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:${trained?'var(--accent-soft)':'rgba(255,255,255,.04)'};border:1px solid ${trained?'color-mix(in srgb,var(--accent) 35%,transparent)':'rgba(255,255,255,.07)'};">
+        ${trained?`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>`:`<span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.14);"></span>`}
+      </span>
+    </div>`;
+  }).join('');
+
+  const recent = sessions.slice(0,5).map(s => {
+    const d = new Date(s.date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('pt-BR', {day:'numeric', month:'short'});
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:13px;background:#121214;border:1px solid rgba(255,255,255,.06);">
+      <span style="flex:none;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z"></path></svg></span>
+      <div style="flex:1;min-width:0;">
+        <p style="margin:0;font:700 13.5px Manrope;color:#DCDCE0;">${s.dayLabel} <span style="color:#7C7C82;font-weight:600;font-size:12px;">· ${dateStr}</span></p>
+        <p style="margin:3px 0 0;color:#7C7C82;font-size:12px;">${s.exerciseCount} exercícios · ${s.setsDone} séries${s.calories ? ` · ~${s.calories} kcal` : ''}</p>
+      </div>
+      <span style="color:#9A9AA0;font:700 13px Manrope;white-space:nowrap;flex-shrink:0;">${wsFmt(s.durationSecs)}</span>
+    </div>`;
+  }).join('');
+
+  const streak = wsGetStreak();
+  const streakBanner = streak > 0 ? `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:linear-gradient(135deg,rgba(240,83,28,.14),rgba(240,83,28,.06));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);margin-bottom:12px;">
+    <span style="font-size:30px;line-height:1;flex-shrink:0;">🔥</span>
+    <div style="flex:1;min-width:0;">
+      <span style="font-family:Anton,sans-serif;font-size:28px;color:#F7F7F6;line-height:1;letter-spacing:.02em;">${streak}</span><span style="color:#9A9AA0;font:700 13px Manrope;margin-left:6px;">${streak === 1 ? 'dia' : 'dias'} seguidos</span>
+      <p style="margin:3px 0 0;color:#7C7C82;font:600 12px Manrope;">${streak >= 7 ? 'Semana perfeita! Incrível.' : streak >= 5 ? 'Quase lá, não para agora!' : streak >= 3 ? 'Bom ritmo, continue!' : 'Começo de algo grande!'}</p>
+    </div>
+  </div>` : '';
+
+  return `
+  <div style="margin-top:36px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+      <span style="font:700 11.5px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.06em;">Esta semana</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+    </div>
+    ${streakBanner}
+    <div style="display:grid;grid-template-columns:${weekCalories > 0 ? 'repeat(4,1fr)' : 'repeat(3,1fr)'};gap:10px;margin-bottom:12px;">
+      <div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 24px Manrope;color:#F2F2F4;">${weekWorkouts}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">treinos</div></div>
+      <div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 24px Manrope;color:#F2F2F4;">${weekSets}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">séries</div></div>
+      <div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 24px Manrope;color:#F2F2F4;">${wsFmt(weekSecs)}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">tempo</div></div>
+      ${weekCalories > 0 ? `<div style="padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font:800 24px Manrope;color:#F0531C;">~${weekCalories}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">kcal</div></div>` : ''}
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:4px;padding:14px 16px;border-radius:14px;background:#121214;border:1px solid rgba(255,255,255,.07);margin-bottom:${weekMuscles.length||sessions.length?'12px':'0'};">${heatmap}</div>
+    ${weekMuscles.length?`<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">
+      ${weekMuscles.map(([bp,cnt])=>{const c=grp(bp);return `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:9px;background:${c.soft};color:${c.color};font-size:12px;font-weight:700;border:1px solid ${c.color}22;">${tPart(bp)}<span style="opacity:.6;font-weight:600;font-size:10.5px;">${cnt}×</span></span>`;}).join('')}
+    </div>`:''}
+
+    ${(()=>{
+      const wlog = safeLS('fit_weight_log');
+      if (!wlog.length) return '';
+      const byEx = {};
+      wlog.forEach(e=>{
+        if (!byEx[e.exId]) byEx[e.exId]={name:e.exName,dates:{}};
+        if (!byEx[e.exId].dates[e.date]||e.weight>byEx[e.exId].dates[e.date]) byEx[e.exId].dates[e.date]=e.weight;
+      });
+      const cards = Object.entries(byEx)
+        .map(([exId,{name,dates}])=>{
+          const pts=Object.keys(dates).sort().slice(-10).map(d=>({d,w:dates[d]}));
+          return {exId,name,pts};
+        })
+        .filter(x=>x.pts.length>=1)
+        .sort((a,b)=>b.pts[b.pts.length-1].w-a.pts[a.pts.length-1].w)
+        .slice(0,4);
+      if (!cards.length) return '';
+      return `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+        <span style="font:700 11.5px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.06em;">Progresso de carga</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;">
+        ${cards.map(({exId,name,pts})=>{
+          const first=pts[0].w, last=pts[pts.length-1].w;
+          const diff=last-first;
+          const diffStr=diff>0?`+${diff.toFixed(1)}`:(diff<0?diff.toFixed(1):'');
+          const diffColor=diff>0?'#4CAF50':diff<0?'#F44336':'#7C7C82';
+          const chart=pts.length>=2?_sparkline(pts.map(p=>p.w),200,40):'';
+          const sinceLabel=pts.length<2?`<span style="color:#5C5C62;font:600 11px Manrope;">primeiro registro</span>`:`<span style="color:${diffColor};font:700 11px Manrope;">${diffStr} kg</span>`;
+          return `<div onclick="openAssign('${exId}')" style="display:flex;align-items:center;gap:14px;padding:13px 14px;border-radius:13px;background:#121214;border:1px solid rgba(255,255,255,.06);cursor:pointer;" onmouseover="this.style.borderColor='rgba(255,255,255,.14)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <div style="flex:1;min-width:0;">
+              <p style="margin:0;font:600 13px Manrope;color:#DCDCE0;text-transform:capitalize;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${name}</p>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                <span style="color:var(--accent);font:700 15px Manrope;">${last} kg</span>
+                ${sinceLabel}
+              </div>
+            </div>
+            ${chart?`<div style="flex:none;">${chart}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    })()}
+
+    ${sessions.length ? `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+      <span style="font:700 11.5px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.06em;">Histórico</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">${recent}</div>` : ''}
+  </div>`;
+}
+
+function renderWorkoutActive() {
+  const exs = wsExsForDay(WS.day);
+  const curEntry = exs[WS.curIdx];
+  if (!curEntry) { renderWorkoutDone(); return; }
+  const curEx = curEntry.exercise;
+  const c = grp(curEx.body_part);
+  const totalSets = wsGetSets(curEx.id);
+  const isWork = WS.mode === 'work';
+  const isRest = WS.mode === 'rest';
+  const allSets = exs.reduce((a, e) => a + wsGetSets(e.exercise.id), 0);
+  const completedAll = Object.keys(WS.done).length;
+  const progressPct = Math.round(completedAll / Math.max(allSets, 1) * 100);
+
+  let subLabel = '';
+  if (isWork) subLabel = `Série ${WS.curSet} de ${totalSets} · ${wsGetReps(curEx.id)} reps`;
+  else if (WS.curSet < totalSets) subLabel = `Próxima: Série ${WS.curSet + 1} de ${totalSets}`;
+  else if (WS.curIdx < exs.length - 1) subLabel = `Próximo: ${exs[WS.curIdx + 1].exercise.name}`;
+
+  const circ = 628;
+  const ringOffset = isRest ? Math.round(circ * (1 - WS.restLeft / Math.max(WS.rest, 1))) : 0;
+
+  const setDots = Array.from({length: totalSets}, (_, k) => {
+    const done = (k + 1 < WS.curSet) || (k + 1 === WS.curSet && isRest);
+    const current = k + 1 === WS.curSet && isWork;
+    const bg = done ? c.color : (current ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.1)');
+    return `<span style="width:34px;height:8px;border-radius:999px;background:${bg};transition:background .2s;"></span>`;
+  }).join('');
+
+  const miniList = exs.map((entry, i) => {
+    const ex = entry.exercise;
+    const sets = wsGetSets(ex.id);
+    const doneCount = Array.from({length: sets}).filter((_, k) => WS.done[ex.id + '-' + (k+1)]).length;
+    const isCur = i === WS.curIdx;
+    const full = doneCount >= sets;
+    const ec = grp(ex.body_part);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:13px;background:${isCur?'var(--accent-soft)':'#121214'};border:1px solid ${isCur?'color-mix(in srgb,var(--accent) 35%,transparent)':'rgba(255,255,255,.06)'};">
+      <span style="flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${full?'#16A34A':(isCur?ec.color:'rgba(255,255,255,.06)')};color:${(full||isCur)?'#fff':'#9A9AA0'};font:800 13px Manrope;">${full?'✓':(i+1)}</span>
+      <span style="flex:1;min-width:0;font:600 14px Manrope;color:${isCur?'#F2F2F4':'#C4C4C8'};text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</span>
+      <span style="color:#8A8A90;font:700 13px Manrope;">${doneCount}/${sets}</span>
+    </div>`;
+  }).join('');
+
+  g('main').innerHTML = `
+  <div style="max-width:760px;margin:0 auto;padding:clamp(20px,3vw,32px) 0 72px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+      <button onclick="wsEndWorkout()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:#9A9AA0;font:600 13.5px Manrope;cursor:pointer;" onmouseover="this.style.color='#F87171'" onmouseout="this.style.color='#9A9AA0'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>Encerrar</button>
+      <span style="color:#9A9AA0;font:700 13px Manrope;">${wsFmt(WS.sessionSecs)} · ${completedAll}/${allSets} séries</span>
+    </div>
+    <div style="height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:22px;">
+      <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent-strong),var(--accent-deep));width:${progressPct}%;transition:width .3s;"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 20px;border-radius:24px;background:linear-gradient(180deg,#161618,#0F0F11);border:1px solid ${isRest?'rgba(255,255,255,.1)':'color-mix(in srgb,'+c.color+' 30%,transparent)'};">
+      <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;background:${isWork?c.soft:'rgba(255,255,255,.06)'};color:${isWork?c.color:'#9A9AA0'};font:800 12.5px Manrope;letter-spacing:.04em;text-transform:uppercase;">${isWork?'Em execução':'Descanso'}</span>
+      <h2 style="margin:14px 0 2px;font:800 20px Manrope;color:#F7F7F6;text-transform:capitalize;">${curEx.name}</h2>
+      <p style="margin:0;color:#9A9AA0;font-size:13.5px;">${subLabel}</p>
+      <div style="position:relative;width:230px;height:230px;margin:18px 0 8px;">
+        <svg width="230" height="230" viewBox="0 0 230 230" style="position:absolute;inset:0;">
+          <circle cx="115" cy="115" r="100" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="11"></circle>
+          <circle cx="115" cy="115" r="100" fill="none" stroke="${c.color}" stroke-width="11" stroke-linecap="round" transform="rotate(-90 115 115)" stroke-dasharray="628" stroke-dashoffset="${ringOffset}" style="transition:stroke-dashoffset .9s linear;"></circle>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <span style="font-family:Anton,sans-serif;font-size:54px;color:#F7F7F6;line-height:1;letter-spacing:.01em;">${isWork?wsFmt(WS.elapsed):wsFmt(WS.restLeft)}</span>
+          <span style="margin-top:6px;color:#7C7C82;font:700 12px Manrope;text-transform:uppercase;letter-spacing:.06em;">${isWork?'tempo da série':'descanso'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;width:100%;max-width:380px;margin-top:6px;">
+        <button onclick="wsToggleRun()" style="flex:1;height:52px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#EDEDED;font:700 15px Manrope;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background='transparent'">${WS.running?'Pausar':'Retomar'}</button>
+        ${isWork ? `<button onclick="wsCompleteSet()" style="flex:1.4;height:52px;border-radius:13px;border:none;color:#fff;font:800 15px Manrope;cursor:pointer;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 12px 30px -12px color-mix(in srgb,var(--accent) 65%,transparent);" onmouseover="this.style.filter='brightness(1.06)'" onmouseout="this.style.filter=''"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>Concluir série</button>` :
+        `<button onclick="wsAddRest()" style="flex:1;height:52px;border-radius:13px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#EDEDED;font:700 15px Manrope;cursor:pointer;">+15s</button>
+        <button onclick="wsSkipRest()" style="flex:1.2;height:52px;border-radius:13px;border:none;color:#fff;font:800 15px Manrope;cursor:pointer;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));display:flex;align-items:center;justify-content:center;gap:7px;" onmouseover="this.style.filter='brightness(1.06)'" onmouseout="this.style.filter=''">Pular<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8zM17 5h3v14h-3z"></path></svg></button>`}
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:18px;">${setDots}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:24px;">${miniList}</div>
+  </div>`;
+}
+
+function renderWorkoutDone() {
+  const exs = wsExsForDay(WS.day);
+  const doneSets = Object.keys(WS.done).length;
+
+  const mets = exs.map(e => WS._insights[e.exercise?.id]?.calories_per_min_met || 3.5);
+  const avgMet = mets.reduce((a, b) => a + b, 0) / (mets.length || 1);
+  const weightKg = S.user?.weight_kg;
+  const totalSetsDone = Object.keys(WS.done).length;
+
+  let volumeKg = 0;
+  Object.entries(WS.weights).forEach(([exId, kg]) => {
+    if (kg > 0) {
+      const setsDone = Object.keys(WS.done).filter(k => k.startsWith(exId + '-')).length;
+      volumeKg += kg * setsDone * (WS.reps[exId] ?? 10);
+    }
+  });
+  volumeKg = Math.round(volumeKg);
+
+  const effectiveSecs = Math.max(WS.sessionSecs, totalSetsDone * 60);
+  const aerobic = weightKg ? avgMet * weightKg * 3.5 / 200 * (effectiveSecs / 60) : 0;
+  const calories = Math.round(aerobic + volumeKg / 60);
+
+  const bodyParts = [...new Set(exs.map(e => e.exercise?.body_part).filter(Boolean))];
+  const partChips = bodyParts.map(p => {
+    const c = grp(p);
+    return `<span style="padding:5px 12px;border-radius:9px;background:${c.soft};color:${c.color};font-size:12.5px;font-weight:700;border:1px solid ${c.color}33;">${tPart(p)}</span>`;
+  }).join('');
+
+  const calTile = calories > 0
+    ? `<div style="padding:16px 22px;border-radius:16px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font-family:Anton,sans-serif;font-size:30px;color:#F0531C;">~${calories}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">kcal</div></div>`
+    : '';
+  const volTile = volumeKg > 0
+    ? `<div style="padding:16px 22px;border-radius:16px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font-family:Anton,sans-serif;font-size:30px;color:#F2F2F4;">${volumeKg}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">kg vol.</div></div>`
+    : '';
+  const noWeightNote = (!weightKg && calories === 0)
+    ? `<p style="margin:12px 0 0;color:#7C7C82;font-size:12.5px;">Configure seu peso em Ajustes para ver as calorias.</p>`
+    : '';
+
+  g('main').innerHTML = `
+  <div style="max-width:760px;margin:0 auto;padding:clamp(20px,3vw,32px) 0 72px;">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 20px;animation:voltPop .4s ease both;">
+      <span style="width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,#22C55E,#16A34A);box-shadow:0 18px 44px -14px rgba(34,197,94,.6);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      </span>
+      <h1 style="margin:22px 0 0;font:800 28px Manrope;letter-spacing:-.02em;color:#F7F7F6;">Treino concluído!</h1>
+      <p style="margin:8px 0 0;color:#9A9AA0;font-size:15px;">Mandou bem, ${S.user?.name||'atleta'}. Bora repetir amanhã.</p>
+      <div style="display:flex;gap:12px;margin-top:28px;flex-wrap:wrap;justify-content:center;">
+        <div style="padding:16px 22px;border-radius:16px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font-family:Anton,sans-serif;font-size:30px;color:#F2F2F4;">${doneSets}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">séries</div></div>
+        <div style="padding:16px 22px;border-radius:16px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font-family:Anton,sans-serif;font-size:30px;color:#F2F2F4;">${exs.length}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">exercícios</div></div>
+        <div style="padding:16px 22px;border-radius:16px;background:#121214;border:1px solid rgba(255,255,255,.07);"><div style="font-family:Anton,sans-serif;font-size:30px;color:#F2F2F4;">${wsFmt(WS.sessionSecs)}</div><div style="color:#7C7C82;font-size:12px;font-weight:600;margin-top:2px;">tempo</div></div>
+        ${calTile}${volTile}
+      </div>
+      ${bodyParts.length ? `<div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:16px;">${partChips}</div>` : ''}
+      ${noWeightNote}
+      <button onclick="wsEndWorkout()" style="margin-top:30px;height:52px;padding:0 28px;border:none;border-radius:14px;cursor:pointer;color:#fff;font:800 15.5px Manrope;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));box-shadow:0 14px 36px -12px color-mix(in srgb,var(--accent) 65%,transparent);" onmouseover="this.style.filter='brightness(1.06)'" onmouseout="this.style.filter=''">Finalizar</button>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTH — VOLT exact design
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _VI=`<svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent)"><path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z"></path></svg>`;
+const _VEY=`<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+const _VEYF=`<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"></path></svg>`;
+const _VLK=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+const _VBA=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"></path></svg>`;
+let _vpw=false;
+
+function showAuthPage(tab='welcome') {
+  g('app').classList.add('hidden');
+  g('auth-root').innerHTML='';
+  _voltShell();
+  if(tab==='login') _voltLogin();
+  else if(tab==='register') _voltSignup();
+  else _voltWelcome();
+}
+
+function _voltShell() {
+  g('auth-root').innerHTML=`
+    <div class="volt-auth-page">
+      <div class="volt-glow"></div><div class="volt-vignette"></div>
+      <div class="volt-card">
+        <button class="volt-back hidden" id="volt-back" onclick="showAuthPage()">${_VBA} Voltar</button>
+        <div class="volt-logo-row" style="justify-content:center;"><img src="logo-volt.png" alt="VOLT" style="height:40px;width:auto;object-fit:contain;"><span style="font-family:Anton,sans-serif;font-size:26px;letter-spacing:.05em;color:#F7F7F6;line-height:1;">VOLT</span></div>
+        <div id="volt-content"></div>
+      </div>
+    </div>`;
+}
+
+function _voltWelcome() {
+  g('volt-back').classList.add('hidden');
+  g('volt-content').innerHTML=`
+    <p class="volt-tagline">Exercícios guiados, planos semanais e progressão real — tudo em um só treino.</p>
+    <div class="volt-stats"><span><span class="volt-stats-hi">1.324+</span> <span class="volt-stats-lo">exercícios</span></span><span class="volt-stats-dot"></span><span><span class="volt-stats-hi">Planos</span> <span class="volt-stats-lo">semanais</span></span></div>
+    <div class="volt-btn-col"><button class="volt-btn-primary" onclick="_voltLogin()">Entrar</button><button class="volt-btn-secondary" onclick="_voltSignup()">Criar conta</button></div>
+    <div class="volt-lock-row">${_VLK} Seus dados ficam apenas neste dispositivo.</div>`;
+}
+
+function _voltLogin() {
+  _vpw=false; g('volt-back').classList.remove('hidden');
+  g('volt-content').innerHTML=`
+    <div class="volt-form-head"><h1>Bem-vindo de volta</h1><p>Continue de onde você parou.</p></div>
+    <form class="volt-form" onsubmit="doLogin();return false;">
+      <div class="volt-field"><label class="volt-label">Email</label><input class="volt-input" id="ae" type="email" placeholder="seu@email.com" autocomplete="email" autofocus></div>
+      <div class="volt-field"><label class="volt-label">Senha</label><div class="volt-pw-wrap"><input class="volt-input volt-input-pw" id="ap" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" class="volt-pw-toggle" onclick="_voltTogglePw()"><span id="vpwi">${_VEY}</span></button></div><a href="#" class="volt-forgot" onclick="return false;">Esqueceu a senha?</a></div>
+      <div class="volt-form-err" id="aerr"></div>
+      <button type="submit" class="volt-btn-primary" style="margin-top:4px">Entrar</button>
+    </form>
+    <div class="volt-switch">Ainda não tem conta? <button class="volt-switch-btn" onclick="_voltSignup()">Criar conta</button></div>`;
+}
+
+function _voltSignup() {
+  _vpw=false; _regSex=''; g('volt-back').classList.remove('hidden');
+  g('volt-content').innerHTML=`
+    <div class="volt-form-head"><h1>Criar conta</h1><p>Comece sua jornada de treino hoje.</p></div>
+    <form class="volt-form" onsubmit="doRegister();return false;">
+      <div class="volt-field"><label class="volt-label">Nome</label><input class="volt-input" id="an" type="text" placeholder="Seu nome" autocomplete="name" autofocus></div>
+      <div class="volt-field"><label class="volt-label">Email</label><input class="volt-input" id="ae" type="email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="volt-field"><label class="volt-label">Senha</label><div class="volt-pw-wrap"><input class="volt-input volt-input-pw" id="ap" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password"><button type="button" class="volt-pw-toggle" onclick="_voltTogglePw()"><span id="vpwi">${_VEY}</span></button></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="volt-field"><label class="volt-label">Peso (kg) <span style="color:#7A7A80;font-weight:400;font-size:10px;">opcional</span></label><input class="volt-input" id="aw" type="number" placeholder="75" min="30" max="400" step="0.1"></div>
+        <div class="volt-field"><label class="volt-label">Altura (cm) <span style="color:#7A7A80;font-weight:400;font-size:10px;">opcional</span></label><input class="volt-input" id="ah" type="number" placeholder="175" min="50" max="280"></div>
+      </div>
+      <div class="volt-field"><label class="volt-label">Idade <span style="color:#7A7A80;font-weight:400;font-size:10px;">opcional</span></label><input class="volt-input" id="aage" type="number" placeholder="25" min="10" max="120"></div>
+      <div class="volt-field">
+        <label class="volt-label">Sexo <span style="color:#7A7A80;font-weight:400;font-size:10px;">opcional</span></label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="rsex-m" onclick="_selRegSex('m')" style="flex:1;height:52px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:#F5F5F4;font:600 13px Manrope;cursor:pointer;transition:all .15s;">Masculino</button>
+          <button type="button" id="rsex-f" onclick="_selRegSex('f')" style="flex:1;height:52px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:#F5F5F4;font:600 13px Manrope;cursor:pointer;transition:all .15s;">Feminino</button>
+          <button type="button" id="rsex-o" onclick="_selRegSex('o')" style="flex:1;height:52px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:#F5F5F4;font:600 13px Manrope;cursor:pointer;transition:all .15s;">Outro</button>
+        </div>
+      </div>
+      <div class="volt-form-err" id="aerr"></div>
+      <button type="submit" class="volt-btn-primary" style="margin-top:4px">Criar conta</button>
+    </form>
+    <div class="volt-switch">Já tem conta? <button class="volt-switch-btn" onclick="_voltLogin()">Entrar</button></div>
+    <p class="volt-tos">Ao criar uma conta, você concorda com os<br><a href="#" style="color:#7A7A80;" onclick="return false;">Termos de Uso</a> e <a href="#" style="color:#7A7A80;" onclick="return false;">Política de Privacidade</a>.</p>`;
+}
+
+function _voltTogglePw() { _vpw=!_vpw; const i=g('ap'); if(i) i.type=_vpw?'text':'password'; const ic=g('vpwi'); if(ic) ic.innerHTML=_vpw?_VEYF:_VEY; }
+function showAuth(tab) { showAuthPage(tab==='register'?'register':'login'); }
+function _selRegSex(v) {
+  _regSex = _regSex === v ? '' : v;
+  ['m','f','o'].forEach(s => {
+    const btn = g('rsex-'+s);
+    if (!btn) return;
+    const sel = s === _regSex;
+    btn.style.borderColor = sel ? 'var(--accent)' : 'rgba(255,255,255,.09)';
+    btn.style.background  = sel ? 'var(--accent-soft)' : 'rgba(255,255,255,.04)';
+    btn.style.color       = sel ? 'var(--accent-strong)' : '#F5F5F4';
+  });
+}
+
+async function doLogin() {
+  const btn=document.querySelector('.volt-form .volt-btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Entrando…';}
+  try {
+    const d=await api('/auth/login',{method:'POST',body:JSON.stringify({email:g('ae').value,password:g('ap').value})});
+    setAuth(d.token,d.user); toast(`Bem-vindo, ${d.user.name}!`); await enterApp();
+  } catch(e) { if(g('aerr'))g('aerr').textContent=e.message; if(btn){btn.disabled=false;btn.textContent='Entrar';} }
+}
+
+async function doRegister() {
+  const btn=document.querySelector('.volt-form .volt-btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Criando…';}
+  try {
+    const body = {name:g('an').value, email:g('ae').value, password:g('ap').value};
+    const w = parseFloat(g('aw')?.value); if (!isNaN(w) && w > 0) body.weight_kg = w;
+    const h = parseFloat(g('ah')?.value); if (!isNaN(h) && h > 0) body.height_cm = h;
+    const a = parseInt(g('aage')?.value);  if (!isNaN(a) && a > 0) body.age = a;
+    if (_regSex) body.sex = _regSex;
+    const d=await api('/auth/register',{method:'POST',body:JSON.stringify(body)});
+    setAuth(d.token,d.user); toast(`Bem-vindo, ${d.user.name}!`); await enterApp();
+  } catch(e) { if(g('aerr'))g('aerr').textContent=e.message; if(btn){btn.disabled=false;btn.textContent='Criar conta';} }
+}
+
+function logout() { clearAuth(); S.plan=null; g('auth-root').innerHTML=''; showAuthPage(); }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function enterApp() {
+  g('auth-root').innerHTML=''; g('app').classList.remove('hidden');
+  S.view='exercises'; renderHeader();
+  const proms = [loadMeta(), loadExercises(1)];
+  if (S.user) proms.push(ensurePlan());
+  await Promise.all(proms);
+  renderExsView();
+  renderHeader();
+}
+
+async function init() {
+  if (S.token && S.user) {
+    try { await enterApp(); }
+    catch(e) {
+      if (!S.token) { /* already redirected to auth by api() */ }
+      else {
+        g('app').classList.add('hidden');
+        g('auth-root').innerHTML=`
+          <div class="volt-auth-page"><div class="volt-glow"></div><div class="volt-vignette"></div>
+            <div class="volt-card" style="text-align:center">
+              <div class="volt-logo-row" style="margin-bottom:12px;justify-content:center;"><img src="logo-volt.png" alt="VOLT" style="height:40px;width:auto;object-fit:contain;"><span style="font-family:Anton,sans-serif;font-size:26px;letter-spacing:.05em;color:#F7F7F6;line-height:1;">VOLT</span></div>
+              <div style="font-size:32px;margin:12px 0">⚠️</div>
+              <div style="font:700 16px Manrope;color:#F7F7F6;margin-bottom:8px">Servidor não encontrado</div>
+              <p style="color:#9A9AA0;font-size:14px;margin-bottom:16px">Certifique-se de que a API está rodando em<br><strong style="color:#F5F5F4">http://localhost:8000</strong></p>
+              <code style="display:block;padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;font-size:11px;color:#9A9AA0;margin-bottom:20px">uv run uvicorn server:app --reload</code>
+              <button class="volt-btn-primary" onclick="init()">Tentar novamente</button>
+            </div>
+          </div>`;
+      }
+    }
+  } else { showAuthPage(); }
+}
+
+init();
+</script>
+</body>
+</html>

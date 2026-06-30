@@ -1,0 +1,10 @@
+.env
+.git
+.claude
+__pycache__
+*.pyc
+*.pyo
+data/exercises.db
+scripts/enrich_checkpoint.json
+designs/
+public/
