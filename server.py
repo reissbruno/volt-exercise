@@ -303,6 +303,43 @@ def init_db() -> None:
     conn.close()
 
 
+def seed_if_empty() -> None:
+    """Import exercises.json into SQLite if the exercises table is empty."""
+    json_path = os.getenv("EXERCISES_JSON_PATH", "data/exercises.json")
+    if not os.path.exists(json_path):
+        print(f"[seed] exercises.json not found at {json_path} — skipping")
+        return
+    conn = open_db()
+    count = conn.execute("SELECT COUNT(*) FROM exercises").fetchone()[0]
+    if count > 0:
+        conn.close()
+        return
+    print(f"[seed] exercises table empty — importing from {json_path} …")
+    exercises: list[dict] = json.loads(open(json_path, encoding="utf-8").read())
+    rows = []
+    for ex in exercises:
+        instr = ex.get("instructions") or {}
+        rows.append((
+            ex["id"], ex["name"],
+            ex.get("category") or ex.get("body_part"),
+            ex.get("body_part"), ex.get("equipment"),
+            instr.get("en"), instr.get("es"), instr.get("it"), instr.get("tr"),
+            ex.get("muscle_group"),
+            json.dumps(ex.get("secondary_muscles") or []),
+            ex.get("target"), ex.get("image"), ex.get("gif_url"), ex.get("created_at"),
+        ))
+    conn.executemany("""
+        INSERT OR REPLACE INTO exercises
+          (id, name, category, body_part, equipment,
+           instructions_en, instructions_es, instructions_it, instructions_tr,
+           muscle_group, secondary_muscles, target, image, gif_url, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, rows)
+    conn.commit()
+    conn.close()
+    print(f"[seed] {len(rows)} exercises imported")
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def row_to_dict(row: sqlite3.Row) -> dict:
     d = dict(row)
@@ -401,6 +438,7 @@ class ProfileUpdate(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    seed_if_empty()
     threading.Thread(target=_install_argos, daemon=True).start()
     yield
 

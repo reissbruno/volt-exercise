@@ -9,10 +9,18 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-# Copy application code
+# Copy source
 COPY server.py ./
-COPY frontend/ ./frontend/
 COPY data/exercises.json ./data/
+COPY scripts/seed.py ./scripts/
+
+# Seed database during build — bakes the populated DB into the image
+RUN DB_PATH=data/exercises.db \
+    EXERCISES_JSON_PATH=data/exercises.json \
+    uv run python scripts/seed.py
+
+# Copy remaining files
+COPY frontend/ ./frontend/
 
 # public/ assets are large (~140 MB); mount as a volume in production.
 # To include them in the image, uncomment:
