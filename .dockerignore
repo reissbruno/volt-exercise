@@ -7,4 +7,3 @@ __pycache__
 data/exercises.db
 scripts/enrich_checkpoint.json
 designs/
-public/

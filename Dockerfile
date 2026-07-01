@@ -21,10 +21,7 @@ RUN DB_PATH=data/exercises.db \
 
 # Copy remaining files
 COPY frontend/ ./frontend/
-
-# public/ assets are large (~140 MB); mount as a volume in production.
-# To include them in the image, uncomment:
-# COPY public/ ./public/
+COPY public/ ./public/
 
 # Runtime environment
 ENV DB_PATH=data/exercises.db \
