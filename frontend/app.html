@@ -218,7 +218,7 @@
 <div class="toast hidden" id="toast"></div>
 
 <script>
-const API = 'http://localhost:8000';
+const API = '';
 
 // ── Body-part color groups ────────────────────────────────────────────────────
 const BODY_COLORS = {
@@ -2243,8 +2243,7 @@ async function init() {
               <div class="volt-logo-row" style="margin-bottom:12px;justify-content:center;"><img src="logo-volt.png" alt="VOLT" style="height:40px;width:auto;object-fit:contain;"><span style="font-family:Anton,sans-serif;font-size:26px;letter-spacing:.05em;color:#F7F7F6;line-height:1;">VOLT</span></div>
               <div style="font-size:32px;margin:12px 0">⚠️</div>
               <div style="font:700 16px Manrope;color:#F7F7F6;margin-bottom:8px">Servidor não encontrado</div>
-              <p style="color:#9A9AA0;font-size:14px;margin-bottom:16px">Certifique-se de que a API está rodando em<br><strong style="color:#F5F5F4">http://localhost:8000</strong></p>
-              <code style="display:block;padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;font-size:11px;color:#9A9AA0;margin-bottom:20px">uv run uvicorn server:app --reload</code>
+              <p style="color:#9A9AA0;font-size:14px;margin-bottom:16px">Não foi possível conectar ao servidor.<br>Tente recarregar a página.</p>
               <button class="volt-btn-primary" onclick="init()">Tentar novamente</button>
             </div>
           </div>`;
