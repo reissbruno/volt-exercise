@@ -466,7 +466,7 @@ function renderExsView() {
           <input type="text" value="${S.search}" oninput="onSearch(this.value)" placeholder="Buscar exercício..." style="width:100%;height:48px;padding:0 16px 0 44px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#F3F3F4;font:500 15px Manrope;outline:none;transition:border-color .18s,box-shadow .18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'" onblur="this.style.borderColor='rgba(255,255,255,.09)';this.style.boxShadow='none'">
         </div>
         ${mkFilterBtn('body_part','Parte do corpo',S.filters.body_part,partOpts)}
-        ${mkFilterBtn('equipment','Equipamento',S.filters.equipment,equipOpts)}
+        ${mkFilterBtn('equipment',tUI('equipment'),S.filters.equipment,equipOpts)}
         <button onclick="loadRand()" style="display:flex;align-items:center;gap:9px;height:48px;padding:0 18px;border-radius:13px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);color:var(--accent-strong);font:700 14px Manrope;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='color-mix(in srgb,var(--accent) 22%,transparent)'" onmouseout="this.style.background='var(--accent-soft)'">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg>
           Aleatório
@@ -511,7 +511,7 @@ function exCard(ex) {
         </div>
       </div>
       <div style="padding:14px 15px 16px;display:flex;flex-direction:column;gap:11px;flex:1;">
-        <h3 style="margin:0;font:600 14.5px Manrope;line-height:1.32;color:#ECECEE;text-transform:capitalize;">${ex.name}</h3>
+        <h3 style="margin:0;font:600 14.5px Manrope;line-height:1.32;color:#ECECEE;text-transform:capitalize;">${exName(ex)}</h3>
         <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:auto;">
           ${ex.body_part?`<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:${c.soft};color:${c.color};font-size:11.5px;font-weight:700;"><span style="width:6px;height:6px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>${tPart(ex.body_part)}</span>`:''}
           ${ex.equipment?`<span style="padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.05);color:#A6A6AC;font-size:11.5px;font-weight:600;">${tEquip(ex.equipment)}</span>`:''}
@@ -646,13 +646,22 @@ const CAT_LABELS = {
 };
 function tDiff(d) { const lang=S.settings.lang; return d?(DIFF_LABELS[lang]?.[(d||'').toLowerCase()]||d):'—'; }
 function tCat(c)  { const lang=S.settings.lang; if (!c) return '—'; return CAT_LABELS[lang]?.[(c||'').toLowerCase()] || tPart(c) || c; }
+function exName(ex) { return (S.settings.lang==='pt'&&ex?.name_pt)?ex.name_pt:(ex?.name||''); }
+const UI_STRINGS = {
+  en: { muscles:'Muscles worked', primary:'PRIMARY', weightHistory:'Weight progress', howTo:'How to perform', similar:'Similar exercises', equipment:'Equipment', difficulty:'Difficulty', category:'Category', whichDays:'Which days will you do it?' },
+  pt: { muscles:'Músculos trabalhados', primary:'PRINCIPAL', weightHistory:'Evolução de peso', howTo:'Como executar', similar:'Exercícios similares', equipment:'Equipamento', difficulty:'Dificuldade', category:'Categoria', whichDays:'Em quais dias você vai fazer?' },
+  es: { muscles:'Músculos trabajados', primary:'PRINCIPAL', weightHistory:'Progreso de peso', howTo:'Cómo ejecutar', similar:'Ejercicios similares', equipment:'Equipamiento', difficulty:'Dificultad', category:'Categoría', whichDays:'¿En qué días lo harás?' },
+  it: { muscles:'Muscoli coinvolti', primary:'PRINCIPALE', weightHistory:'Progressione peso', howTo:'Come eseguire', similar:'Esercizi simili', equipment:'Attrezzatura', difficulty:'Difficoltà', category:'Categoria', whichDays:'In quali giorni lo farai?' },
+  tr: { muscles:'Çalışan kaslar', primary:'ANA', weightHistory:'Ağırlık gelişimi', howTo:'Nasıl yapılır', similar:'Benzer egzersizler', equipment:'Ekipman', difficulty:'Zorluk', category:'Kategori', whichDays:'Hangi günler yapacaksın?' },
+};
+function tUI(key) { const lang=S.settings.lang; return UI_STRINGS[lang]?.[key]||UI_STRINGS.en[key]||key; }
 
 function renderAssignModal() {
   const ex = _exCache[S.assignExId];
+  const lang = S.settings.lang;
   const c = ex ? grp(ex.body_part) : {color:'#9A9AA0',soft:'rgba(154,154,160,.15)'};
   const name = (lang === 'pt' && ex?.name_pt) ? ex.name_pt : (ex?.name || S.assignExId);
   const mediaUrl = ex?.gif_url ? imgUrl(ex.gif_url) : (ex?.image ? imgUrl(ex.image) : '');
-  const lang = S.settings.lang;
 
   let instrText = '';
   if (ex?._instr_lang === lang && ex?._instr !== undefined) instrText = ex._instr;
@@ -705,9 +714,9 @@ function renderAssignModal() {
       <!-- Stat tiles (only render tiles that have data) -->
       ${(()=>{
         const tiles = [];
-        if (ex?.equipment)  tiles.push({l:'Equipamento', v:tEquip(ex.equipment)});
-        if (diff)           tiles.push({l:'Dificuldade',  v:tDiff(diff)});
-        if (cat)            tiles.push({l:'Categoria',    v:tCat(cat)});
+        if (ex?.equipment)  tiles.push({l:tUI('equipment'), v:tEquip(ex.equipment)});
+        if (diff)           tiles.push({l:tUI('difficulty'), v:tDiff(diff)});
+        if (cat)            tiles.push({l:tUI('category'),   v:tCat(cat)});
         if (!tiles.length)  return '';
         const cols = tiles.length === 1 ? '1fr' : tiles.length === 2 ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
         return `<div style="display:grid;grid-template-columns:${cols};gap:9px;margin-top:18px;">
@@ -722,9 +731,9 @@ function renderAssignModal() {
       <!-- Muscles -->
       ${(target||secondary.length>0)?`
       <div style="margin-top:20px;">
-        <div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;">Músculos trabalhados</div>
+        <div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;">${tUI('muscles')}</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
-          ${target?`<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:9px;background:${c.soft};color:${c.color};font-size:12.5px;font-weight:700;border:1px solid ${c.color}44;">${target} <span style="font-size:9.5px;font-weight:800;opacity:.7;">PRINCIPAL</span></span>`:''}
+          ${target?`<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:9px;background:${c.soft};color:${c.color};font-size:12.5px;font-weight:700;border:1px solid ${c.color}44;">${target} <span style="font-size:9.5px;font-weight:800;opacity:.7;">${tUI('primary')}</span></span>`:''}
           ${secondary.map(m=>`<span style="padding:5px 11px;border-radius:9px;background:rgba(255,255,255,.05);color:#B6B6BC;font-size:12.5px;font-weight:600;">${m}</span>`).join('')}
         </div>
       </div>`:''}
@@ -740,7 +749,7 @@ function renderAssignModal() {
         const chart = _sparkline(pts.map(p=>p.w), 260, 44);
         return `<div style="margin-top:18px;padding:14px 16px;border-radius:13px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Evolução de peso</span>
+            <span style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">${tUI('weightHistory')}</span>
             <span style="color:var(--accent);font:700 13px Manrope;">${pts[pts.length-1].w} kg</span>
           </div>
           ${chart}
@@ -780,7 +789,7 @@ function renderAssignModal() {
       <!-- Instructions -->
       ${steps.length>0?`
       <div style="margin-top:22px;">
-        <h2 style="margin:0 0 13px;font:800 16px Manrope;color:#F2F2F4;">Como executar</h2>
+        <h2 style="margin:0 0 13px;font:800 16px Manrope;color:#F2F2F4;">${tUI('howTo')}</h2>
         <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;">
           ${steps.map((t,i)=>`
             <li style="display:flex;gap:13px;align-items:flex-start;">
@@ -791,7 +800,7 @@ function renderAssignModal() {
       </div>`
       : instrText?`
       <div style="margin-top:22px;">
-        <h2 style="margin:0 0 10px;font:800 16px Manrope;color:#F2F2F4;">Como executar</h2>
+        <h2 style="margin:0 0 10px;font:800 16px Manrope;color:#F2F2F4;">${tUI('howTo')}</h2>
         <p style="margin:0;color:#C4C4CA;font-size:14px;line-height:1.6;">${instrText}</p>
       </div>`:''}
 
@@ -800,14 +809,14 @@ function renderAssignModal() {
         const alts = ex?._alts;
         if (!alts || !alts.length) return '';
         return `<div style="margin-top:22px;">
-          <div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:11px;">Exercícios similares</div>
+          <div style="color:#7C7C82;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:11px;">${tUI('similar')}</div>
           <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;">
             ${alts.map(a=>{
               const ac=grp(a.body_part);
               return `<div onclick="openAssign('${a.id}')" style="flex:none;width:138px;padding:12px;border-radius:13px;background:#0e0e10;border:1px solid rgba(255,255,255,.07);cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">
                 <span style="display:inline-block;padding:3px 9px;border-radius:7px;background:${ac.soft};color:${ac.color};font-size:10.5px;font-weight:700;text-transform:capitalize;">${tPart(a.body_part)}</span>
-                <p style="margin:8px 0 0;color:#DCDCE0;font:600 12.5px Manrope;line-height:1.4;text-transform:capitalize;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${a.name}</p>
-                <p style="margin:5px 0 0;color:#5C5C62;font-size:11px;text-transform:capitalize;">${a.equipment||''}</p>
+                <p style="margin:8px 0 0;color:#DCDCE0;font:600 12.5px Manrope;line-height:1.4;text-transform:capitalize;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${exName(a)}</p>
+                <p style="margin:5px 0 0;color:#5C5C62;font-size:11px;text-transform:capitalize;">${tEquip(a.equipment||'')}</p>
               </div>`;
             }).join('')}
           </div>
@@ -817,7 +826,7 @@ function renderAssignModal() {
       <!-- Day picker + CTA -->
       <div style="margin-top:auto;padding-top:24px;">
         <div style="margin-bottom:12px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);">
-          <div style="color:#9A9AA0;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;">Em quais dias você vai fazer?</div>
+          <div style="color:#9A9AA0;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;">${tUI('whichDays')}</div>
           <div style="display:flex;flex-wrap:wrap;gap:7px;">${dayPills}</div>
         </div>
         <button onclick="closeAll()" style="width:100%;height:54px;display:flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:14px;cursor:pointer;font:800 15.5px Manrope;color:${inPlan?'var(--accent)':'#fff'};background:${inPlan?'rgba(255,255,255,.05)':'linear-gradient(180deg,var(--accent-strong),var(--accent-deep))'};box-shadow:${inPlan?'inset 0 0 0 1px color-mix(in srgb,var(--accent) 42%,transparent)':'0 12px 32px -12px color-mix(in srgb,var(--accent) 60%,transparent)'};transition:all .18s;" onmouseover="this.style.filter='brightness(1.07)'" onmouseout="this.style.filter=''">
@@ -972,7 +981,7 @@ function dayExItem(entry) {
   return `
     <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:11px;">
       <span style="flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${c.soft};"><span style="width:7px;height:7px;border-radius:50%;background:${c.color};"></span></span>
-      <span style="flex:1;min-width:0;font:600 13px Manrope;color:#DCDCE0;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</span>
+      <span style="flex:1;min-width:0;font:600 13px Manrope;color:#DCDCE0;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${exName(ex)}</span>
       <button onclick="removeEntry(${entry.entry_id})" style="flex:none;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#7A7A80;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='rgba(244,63,63,.14)';this.style.color='#F87171'" onmouseout="this.style.background='transparent';this.style.color='#7A7A80'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
       </button>
@@ -1044,7 +1053,7 @@ function renderDayModal() {
           <span style="width:8px;height:8px;border-radius:50%;background:${c.color};"></span>
         </span>
         <span style="flex:1;min-width:0;">
-          <span style="display:block;font:600 14px Manrope;color:#ECECEE;text-transform:capitalize;line-height:1.3;">${ex.name}</span>
+          <span style="display:block;font:600 14px Manrope;color:#ECECEE;text-transform:capitalize;line-height:1.3;">${exName(ex)}</span>
           <span style="display:block;margin-top:3px;color:${c.color};font-size:11.5px;font-weight:700;">${tPart(ex.body_part)||''}<span style="color:#8E8E94;font-weight:600;">${ex.equipment?' · '+tEquip(ex.equipment):''}</span></span>
         </span>
         <span style="flex:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${on?'var(--accent)':'transparent'};border:1.5px solid ${on?'var(--accent)':'rgba(255,255,255,.2)'};color:${on?'#fff':'#8A8A90'};">
@@ -1630,7 +1639,7 @@ function wsPromptWeight() {
   const last = wsLastWeight(curEx.id);
   const modal = g('m-weight');
   modal.innerHTML = `
-    <p style="margin:0 0 3px;font:800 17px Manrope;color:#F7F7F6;text-transform:capitalize;">${curEx.name}</p>
+    <p style="margin:0 0 3px;font:800 17px Manrope;color:#F7F7F6;text-transform:capitalize;">${exName(curEx)}</p>
     <p style="margin:0 0 20px;color:#9A9AA0;font-size:13px;">Série ${WS.curSet} · ${wsGetReps(curEx.id)} reps</p>
     <label style="display:block;font:700 11px Manrope;color:#7C7C82;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Carga (kg)</label>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:22px;">
@@ -1752,7 +1761,7 @@ function renderWorkoutSetup() {
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <span style="flex:none;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:${c.soft};color:${c.color};font:800 14px Manrope;">${i+1}</span>
         <div style="flex:1;min-width:0;">
-          <p style="margin:0;font:700 15px Manrope;color:#ECECEE;text-transform:capitalize;line-height:1.3;">${ex.name}</p>
+          <p style="margin:0;font:700 15px Manrope;color:#ECECEE;text-transform:capitalize;line-height:1.3;">${exName(ex)}</p>
           <span style="display:inline-flex;align-items:center;gap:5px;margin-top:5px;color:${c.color};font-size:12px;font-weight:700;"><span style="width:5px;height:5px;border-radius:50%;background:${c.color};"></span>${tPart(ex.body_part)}</span>
         </div>
       </div>
@@ -1978,7 +1987,7 @@ function renderWorkoutActive() {
   let subLabel = '';
   if (isWork) subLabel = `Série ${WS.curSet} de ${totalSets} · ${wsGetReps(curEx.id)} reps`;
   else if (WS.curSet < totalSets) subLabel = `Próxima: Série ${WS.curSet + 1} de ${totalSets}`;
-  else if (WS.curIdx < exs.length - 1) subLabel = `Próximo: ${exs[WS.curIdx + 1].exercise.name}`;
+  else if (WS.curIdx < exs.length - 1) subLabel = `Próximo: ${exName(exs[WS.curIdx + 1].exercise)}`;
 
   const circ = 628;
   const ringOffset = isRest ? Math.round(circ * (1 - WS.restLeft / Math.max(WS.rest, 1))) : 0;
@@ -1999,7 +2008,7 @@ function renderWorkoutActive() {
     const ec = grp(ex.body_part);
     return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:13px;background:${isCur?'var(--accent-soft)':'#121214'};border:1px solid ${isCur?'color-mix(in srgb,var(--accent) 35%,transparent)':'rgba(255,255,255,.06)'};">
       <span style="flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${full?'#16A34A':(isCur?ec.color:'rgba(255,255,255,.06)')};color:${(full||isCur)?'#fff':'#9A9AA0'};font:800 13px Manrope;">${full?'✓':(i+1)}</span>
-      <span style="flex:1;min-width:0;font:600 14px Manrope;color:${isCur?'#F2F2F4':'#C4C4C8'};text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</span>
+      <span style="flex:1;min-width:0;font:600 14px Manrope;color:${isCur?'#F2F2F4':'#C4C4C8'};text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${exName(ex)}</span>
       <span style="color:#8A8A90;font:700 13px Manrope;">${doneCount}/${sets}</span>
     </div>`;
   }).join('');
@@ -2015,7 +2024,7 @@ function renderWorkoutActive() {
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 20px;border-radius:24px;background:linear-gradient(180deg,#161618,#0F0F11);border:1px solid ${isRest?'rgba(255,255,255,.1)':'color-mix(in srgb,'+c.color+' 30%,transparent)'};">
       <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;background:${isWork?c.soft:'rgba(255,255,255,.06)'};color:${isWork?c.color:'#9A9AA0'};font:800 12.5px Manrope;letter-spacing:.04em;text-transform:uppercase;">${isWork?'Em execução':'Descanso'}</span>
-      <h2 style="margin:14px 0 2px;font:800 20px Manrope;color:#F7F7F6;text-transform:capitalize;">${curEx.name}</h2>
+      <h2 style="margin:14px 0 2px;font:800 20px Manrope;color:#F7F7F6;text-transform:capitalize;">${exName(curEx)}</h2>
       <p style="margin:0;color:#9A9AA0;font-size:13.5px;">${subLabel}</p>
       <div style="position:relative;width:230px;height:230px;margin:18px 0 8px;">
         <svg width="230" height="230" viewBox="0 0 230 230" style="position:absolute;inset:0;">

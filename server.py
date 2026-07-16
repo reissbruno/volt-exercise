@@ -880,7 +880,7 @@ def get_exercise_alternatives(
         extra_params = [equipment]
 
     rows = db.execute(
-        f"""SELECT e.id, e.name, e.body_part, e.equipment, e.target, e.muscle_group,
+        f"""SELECT e.id, e.name, e.name_pt, e.body_part, e.equipment, e.target, e.muscle_group,
                    e.image, e.gif_url,
                    ei.difficulty, ei.effort_type, ei.calories_per_min_met,
                    CASE WHEN e.target = ? THEN 0 ELSE 1 END AS relevance
