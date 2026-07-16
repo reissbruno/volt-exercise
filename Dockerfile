@@ -11,7 +11,7 @@ RUN uv sync --frozen --no-dev
 
 # Copy source
 COPY server.py ./
-COPY data/exercises.json ./data/
+COPY data/ ./data/
 COPY scripts/seed.py ./scripts/
 
 # Seed database during build — bakes the populated DB into the image

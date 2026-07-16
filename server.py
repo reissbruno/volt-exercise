@@ -228,21 +228,25 @@ def init_db() -> None:
         );
 
         CREATE TABLE IF NOT EXISTS exercises (
-            id                TEXT PRIMARY KEY,
-            name              TEXT NOT NULL,
-            category          TEXT,
-            body_part         TEXT,
-            equipment         TEXT,
-            instructions_en   TEXT,
-            instructions_es   TEXT,
-            instructions_it   TEXT,
-            instructions_tr   TEXT,
-            muscle_group      TEXT,
-            secondary_muscles TEXT,
-            target            TEXT,
-            image             TEXT,
-            gif_url           TEXT,
-            created_at        TEXT
+            id                   TEXT PRIMARY KEY,
+            name                 TEXT NOT NULL,
+            name_pt              TEXT,
+            category             TEXT,
+            body_part            TEXT,
+            equipment            TEXT,
+            instructions_en      TEXT,
+            instructions_es      TEXT,
+            instructions_it      TEXT,
+            instructions_tr      TEXT,
+            instructions_pt      TEXT,
+            muscle_group         TEXT,
+            secondary_muscles    TEXT,
+            target               TEXT,
+            target_pt            TEXT,
+            secondary_muscles_pt TEXT,
+            image                TEXT,
+            gif_url              TEXT,
+            created_at           TEXT
         );
 
         CREATE TABLE IF NOT EXISTS workout_plans (
@@ -276,29 +280,51 @@ def init_db() -> None:
         );
 
         CREATE TABLE IF NOT EXISTS exercise_insights (
-            exercise_id          TEXT PRIMARY KEY,
-            difficulty           TEXT,
-            effort_type          TEXT,
-            calories_per_min_met REAL,
-            common_mistakes      TEXT,
-            benefits             TEXT,
-            injury_risk          TEXT,
-            injury_risk_area     TEXT,
-            easier_variation     TEXT,
-            harder_variation     TEXT,
-            no_equipment_alt     TEXT,
-            generated_at         TEXT,
+            exercise_id            TEXT PRIMARY KEY,
+            difficulty             TEXT,
+            effort_type            TEXT,
+            calories_per_min_met   REAL,
+            common_mistakes        TEXT,
+            common_mistakes_pt     TEXT,
+            benefits               TEXT,
+            benefits_pt            TEXT,
+            injury_risk            TEXT,
+            injury_risk_area       TEXT,
+            injury_risk_area_pt    TEXT,
+            easier_variation       TEXT,
+            easier_variation_pt    TEXT,
+            harder_variation       TEXT,
+            harder_variation_pt    TEXT,
+            no_equipment_alt       TEXT,
+            no_equipment_alt_pt    TEXT,
+            generated_at           TEXT,
             FOREIGN KEY (exercise_id) REFERENCES exercises(id)
         );
     """)
     conn.commit()
 
-    # Migrate existing databases: add physical profile columns if missing
+    # Migrate: add physical profile columns if missing
     for col, typedef in [("weight_kg","REAL"),("height_cm","REAL"),("age","INTEGER"),("sex","TEXT")]:
         try:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
         except Exception:
             pass
+
+    # Migrate: add PT translation columns if missing
+    for col in ("name_pt", "instructions_pt", "target_pt", "secondary_muscles_pt"):
+        try:
+            conn.execute(f"ALTER TABLE exercises ADD COLUMN {col} TEXT")
+        except Exception:
+            pass
+
+    # Migrate: add PT insight columns if missing
+    for col in ("common_mistakes_pt", "benefits_pt", "injury_risk_area_pt",
+                "easier_variation_pt", "harder_variation_pt", "no_equipment_alt_pt"):
+        try:
+            conn.execute(f"ALTER TABLE exercise_insights ADD COLUMN {col} TEXT")
+        except Exception:
+            pass
+
     conn.commit()
     conn.close()
 
@@ -340,15 +366,102 @@ def seed_if_empty() -> None:
     print(f"[seed] {len(rows)} exercises imported")
 
 
+def _import_enrichments() -> None:
+    """Load data/enrichments.json into exercise_insights (once)."""
+    json_path = os.getenv("ENRICHMENTS_PATH", "data/enrichments.json")
+    if not os.path.exists(json_path):
+        return
+    conn = open_db()
+    if conn.execute("SELECT 1 FROM exercise_insights LIMIT 1").fetchone():
+        conn.close()
+        return
+    print(f"[seed] importando enrichments de {json_path} …")
+    try:
+        enrichments: dict = json.loads(open(json_path, encoding="utf-8").read())
+        for ex_id, ins in enrichments.items():
+            conn.execute(
+                """INSERT OR REPLACE INTO exercise_insights
+                   (exercise_id, difficulty, effort_type, calories_per_min_met,
+                    common_mistakes, common_mistakes_pt,
+                    benefits, benefits_pt,
+                    injury_risk,
+                    injury_risk_area, injury_risk_area_pt,
+                    easier_variation, easier_variation_pt,
+                    harder_variation, harder_variation_pt,
+                    no_equipment_alt, no_equipment_alt_pt,
+                    generated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))""",
+                (
+                    ex_id,
+                    ins.get("difficulty"),
+                    ins.get("effort_type"),
+                    ins.get("calories_per_min_met"),
+                    json.dumps(ins.get("common_mistakes") or [], ensure_ascii=False),
+                    json.dumps(ins.get("common_mistakes_pt") or [], ensure_ascii=False),
+                    json.dumps(ins.get("benefits") or [], ensure_ascii=False),
+                    json.dumps(ins.get("benefits_pt") or [], ensure_ascii=False),
+                    ins.get("injury_risk"),
+                    ins.get("injury_risk_area"),
+                    ins.get("injury_risk_area_pt"),
+                    ins.get("easier_variation"),
+                    ins.get("easier_variation_pt"),
+                    ins.get("harder_variation"),
+                    ins.get("harder_variation_pt"),
+                    ins.get("no_equipment_alt"),
+                    ins.get("no_equipment_alt_pt"),
+                ),
+            )
+        conn.commit()
+        print(f"[seed] {len(enrichments)} enrichments importados")
+    except Exception as exc:
+        print(f"[seed] erro ao importar enrichments: {exc}")
+    finally:
+        conn.close()
+
+
+def _import_translations_pt() -> None:
+    """Load data/translations_pt.json into the exercises table (once)."""
+    json_path = os.getenv("TRANSLATIONS_PT_PATH", "data/translations_pt.json")
+    if not os.path.exists(json_path):
+        return
+    conn = open_db()
+    # Skip if already imported
+    if conn.execute("SELECT name_pt FROM exercises WHERE name_pt IS NOT NULL LIMIT 1").fetchone():
+        conn.close()
+        return
+    print(f"[seed] importando traduções PT de {json_path} …")
+    try:
+        translations: dict = json.loads(open(json_path, encoding="utf-8").read())
+        for ex_id, t in translations.items():
+            sec_pt = t.get("secondary_muscles_pt") or []
+            conn.execute(
+                "UPDATE exercises SET name_pt=?, instructions_pt=?, target_pt=?, secondary_muscles_pt=? WHERE id=?",
+                (
+                    t.get("name_pt") or None,
+                    t.get("instructions_pt") or None,
+                    t.get("target_pt") or None,
+                    json.dumps(sec_pt, ensure_ascii=False),
+                    ex_id,
+                ),
+            )
+        conn.commit()
+        print(f"[seed] {len(translations)} traduções PT importadas")
+    except Exception as exc:
+        print(f"[seed] erro ao importar traduções PT: {exc}")
+    finally:
+        conn.close()
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def row_to_dict(row: sqlite3.Row) -> dict:
     d = dict(row)
-    raw = d.get("secondary_muscles")
-    if isinstance(raw, str):
-        try:
-            d["secondary_muscles"] = json.loads(raw)
-        except Exception:
-            d["secondary_muscles"] = []
+    for field in ("secondary_muscles", "secondary_muscles_pt"):
+        raw = d.get(field)
+        if isinstance(raw, str):
+            try:
+                d[field] = json.loads(raw)
+            except Exception:
+                d[field] = []
     return d
 
 
@@ -439,6 +552,8 @@ class ProfileUpdate(BaseModel):
 async def lifespan(app: FastAPI):
     init_db()
     seed_if_empty()
+    _import_enrichments()
+    _import_translations_pt()
     threading.Thread(target=_install_argos, daemon=True).start()
     yield
 
@@ -681,12 +796,18 @@ def get_exercise_insights(exercise_id: str, db: DB, lang: Optional[str] = Query(
 
     if lang == "pt":
         for field in ("injury_risk_area", "easier_variation", "harder_variation", "no_equipment_alt"):
-            if d.get(field):
+            pt_val = d.get(f"{field}_pt")
+            if pt_val:
+                d[field] = pt_val
+            elif d.get(field):
                 d[field] = _translate_cached(d[field], "en", "pt", db)
         for arr_field in ("common_mistakes", "benefits"):
-            if isinstance(d.get(arr_field), list):
+            pt_key = f"{arr_field}_pt"
+            if isinstance(d.get(pt_key), list) and d[pt_key]:
+                d[arr_field] = d[pt_key]
+            elif isinstance(d.get(arr_field), list):
                 d[arr_field] = [_translate_cached(item, "en", "pt", db) for item in d[arr_field]]
-        d["_translated"] = _argos_ready
+        d["_translated"] = True
 
     return d
 

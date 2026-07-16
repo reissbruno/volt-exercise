@@ -584,6 +584,8 @@ async function _loadExInstr(exId) {
   let text = '';
   if (lang === 'en') {
     text = ex.instructions_en || '';
+  } else if (lang === 'pt' && ex.instructions_pt) {
+    text = ex.instructions_pt;
   } else if (lang !== 'pt' && ex[`instructions_${lang}`]) {
     text = ex[`instructions_${lang}`];
   } else if (ex.instructions_en) {
@@ -643,12 +645,12 @@ const CAT_LABELS = {
   tr: {strength:'Güç',stretching:'Esneme',cardio:'Kardiyo',plyometrics:'Pliometri',powerlifting:'Powerlifting','olympic weightlifting':'Halter',strongman:'Strongman'},
 };
 function tDiff(d) { const lang=S.settings.lang; return d?(DIFF_LABELS[lang]?.[(d||'').toLowerCase()]||d):'—'; }
-function tCat(c)  { const lang=S.settings.lang; return c?(CAT_LABELS[lang]?.[(c||'').toLowerCase()]||c):'—'; }
+function tCat(c)  { const lang=S.settings.lang; if (!c) return '—'; return CAT_LABELS[lang]?.[(c||'').toLowerCase()] || tPart(c) || c; }
 
 function renderAssignModal() {
   const ex = _exCache[S.assignExId];
   const c = ex ? grp(ex.body_part) : {color:'#9A9AA0',soft:'rgba(154,154,160,.15)'};
-  const name = ex?.name || S.assignExId;
+  const name = (lang === 'pt' && ex?.name_pt) ? ex.name_pt : (ex?.name || S.assignExId);
   const mediaUrl = ex?.gif_url ? imgUrl(ex.gif_url) : (ex?.image ? imgUrl(ex.image) : '');
   const lang = S.settings.lang;
 
@@ -673,8 +675,9 @@ function renderAssignModal() {
   // Stats
   const diff = ex?.difficulty || ex?.level;
   const cat  = ex?.category;
-  const secondary = Array.isArray(ex?.secondary_muscles) ? ex.secondary_muscles : (typeof ex?.secondary_muscles==='string'?JSON.parse(ex.secondary_muscles||'[]'):[]);
-  const target = ex?.target || '';
+  const _secRaw = (lang === 'pt' && Array.isArray(ex?.secondary_muscles_pt) && ex.secondary_muscles_pt.length) ? ex.secondary_muscles_pt : ex?.secondary_muscles;
+  const secondary = Array.isArray(_secRaw) ? _secRaw : (typeof _secRaw==='string'?JSON.parse(_secRaw||'[]'):[]);
+  const target = (lang === 'pt' && ex?.target_pt) ? ex.target_pt : (ex?.target || '');
 
   g('m-assign').innerHTML = `
     <!-- ── Left: image panel ── -->

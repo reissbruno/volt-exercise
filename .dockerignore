@@ -6,4 +6,5 @@ __pycache__
 *.pyo
 data/exercises.db
 scripts/enrich_checkpoint.json
+scripts/translate_pt_checkpoint.json
 designs/
